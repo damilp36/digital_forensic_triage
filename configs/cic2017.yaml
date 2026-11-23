@@ -1,0 +1,82 @@
+# CIC-IDS2017 (CICFlowMeter CSVs, original release).
+# Swap `files` for the corrected release of Engelen et al. (WTMC 2021) when available; the loader is the same.
+name: cic2017
+seed: 0
+seeds: [0, 1, 2, 3, 4]
+dataset:
+  loader: cicflowmeter
+  base_dir: "C:/Users/popson/Box/Code4IT_OT/New Dataset/CIC2017"
+  files:
+    - Monday-WorkingHours.pcap_ISCX.csv
+    - Tuesday-WorkingHours.pcap_ISCX.csv
+    - Wednesday-workingHours.pcap_ISCX.csv
+    - Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv
+    - Thursday-WorkingHours-Afternoon-Infilteration.pcap_ISCX.csv
+    - Friday-WorkingHours-Morning.pcap_ISCX.csv
+    - Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv
+    - Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv
+  label_col: Label
+  time_col: Timestamp
+  time_format: cic2017
+  id_cols: [Flow ID, Source IP, Source Port, Destination IP]
+  drop_cols: [Fwd Header Length.1]
+  benign_labels: [BENIGN]
+
+# Oracle: code execution / persistence / data theft -> P1; recon, brute force, DoS, other web -> P2.
+priority_map:
+  P1: [Bot, Infiltration, Heartbleed, "Web Attack - Sql Injection"]
+  P2: [PortScan, DDoS, DoS Hulk, DoS GoldenEye, DoS slowloris, DoS Slowhttptest, FTP-Patator, SSH-Patator,
+       "Web Attack - Brute Force", "Web Attack - XSS"]
+  default_attack: P2
+
+# Monday (benign only) is the fit window. Each CIC-IDS2017 attack occupies one block of one day,
+# so Tuesday-Friday is cut into 20-minute blocks that alternate between tune and test.
+split:
+  strategy: blocked
+  fit_until: "2017-07-04 00:00:00"
+  block_minutes: 20
+
+sample:
+  fit_benign: 100000
+  calibration: 50000
+  background_pool: 20000
+  tune: {benign_fraction: 0.1, attack_cap_per_class: 15000}
+  test: {benign_fraction: 0.1, attack_cap_per_class: 15000}
+
+detector: {type: iforest, n_estimators: 100, max_samples: 256}
+explain: {method: shap, background_size: 100, n_backgrounds: 5, top_k: 5, chunk: 400}
+alert: {theta: 0.95}
+represent: {n_bins: 5, bands: [0.99, 0.999]}
+rules: {learner: ripper, max_conds: 4, max_rules: 40, max_train: 15000, k: 2}
+guard: {enabled: true, mode: conservative, p3_max_q: 0.99}
+oracle: {eta: 0.0}
+
+# TCP initial window sizes act as OS fingerprints and are a documented shortcut in this corpus.
+shortcut_features: [Destination Port, Init_Win_bytes_forward, Init_Win_bytes_backward]
+
+evasion:
+  padding_len_regex: ["Fwd Packet Length (Max|Min|Mean)", "(Max|Min) Packet Length", "Packet Length Mean",
+                      "Average Packet Size", "Avg Fwd Segment Size"]
+  padding_total: {"Total Length of Fwd Packets": "Total Fwd Packets", "Subflow Fwd Bytes": "Subflow Fwd Packets"}
+  timing_mult_regex: ["Flow Duration", "Flow IAT .*", "Fwd IAT .*", "Bwd IAT .*", "Active .*", "Idle .*"]
+  timing_div_regex: ["Flow Bytes/s", "Flow Packets/s", "Fwd Packets/s", "Bwd Packets/s"]
+  port_features: [Destination Port]
+  padding_bytes: [16, 64, 256]
+  timing_factors: [0.5, 2.0, 5.0]
+  ports: [80, 443]
+
+testbed: {n_sensors: 4, batch_size: 256, max_flows: 60000}
+
+eval:
+  budgets: [100, 500, 1000, 5000]
+  stability_sample: 600
+  stability_seeds: [0, 1, 2]
+  faithfulness_sample: 300
+  lime_sample: 1500
+  anchors_sample: 2000
+  replay_sample: 500
+  eta_sweep: [0.0, 0.1, 0.2, 0.3]
+  background_sizes: [10, 50, 100, 500]
+  probe_seeds: [0, 1, 2]
+  detector_seeds: [0, 1, 2]
+  detectors: [autoencoder, xgboost]

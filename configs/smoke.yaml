@@ -1,0 +1,38 @@
+# Fast end-to-end check on synthetic NetFlow-like traffic (a few minutes).
+name: smoke
+seeds: [0, 1, 2]
+dataset:
+  loader: synthetic
+  synthetic: {n: 40000}
+priority_map:
+  P1: [Exploits, Backdoor]
+  P2: [Reconnaissance, DoS, Fuzzers]
+split: {strategy: time, fractions: [0.4, 0.3, 0.3]}
+sample:
+  fit_benign: 8000
+  calibration: 4000
+  background_pool: 2000
+alert: {theta: 0.95}
+explain: {background_size: 50, chunk: 300}
+rules: {max_train: 3000, k: 1}
+oracle: {eta: 0.0}
+shortcut_features: [L4_DST_PORT, MIN_TTL, MAX_TTL]
+evasion:
+  padding_len_regex: [LONGEST_FLOW_PKT, SHORTEST_FLOW_PKT]
+  padding_total: {IN_BYTES: IN_PKTS, OUT_BYTES: OUT_PKTS}
+  timing_mult_regex: [FLOW_DURATION_MILLISECONDS, ".*_IAT_.*"]
+  port_features: [L4_DST_PORT]
+testbed: {n_sensors: 3, batch_size: 128, max_flows: 6000}
+eval:
+  budgets: [50, 200, 500]
+  stability_sample: 150
+  stability_seeds: [0, 1]
+  faithfulness_sample: 60
+  lime_sample: 150
+  anchors_sample: 300
+  replay_sample: 100
+  eta_sweep: [0.0, 0.2]
+  background_sizes: [10, 50]
+  probe_seeds: [0]
+  detector_seeds: [0]
+  detectors: [autoencoder, xgboost]

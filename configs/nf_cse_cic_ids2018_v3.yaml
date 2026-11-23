@@ -1,0 +1,53 @@
+# NF-CSE-CIC-IDS2018-v3 (UQ NetFlow v3, 53 features; 20.1M flows, 12.9% attacks).
+# Shares the feature set of nf_unsw_nb15_v3, enabling the cross-corpus probe:
+#   xtriage cross --train configs/nf_unsw_nb15_v3.yaml --test configs/nf_cse_cic_ids2018_v3.yaml
+name: nf_cse_cic_ids2018_v3
+seed: 0
+seeds: [0, 1, 2, 3, 4]
+dataset:
+  loader: netflow_v3
+  base_dir: data/raw/NF-CSE-CIC-IDS2018-v3
+  files: ["*.csv"]
+  label_col: Label
+  attack_col: Attack
+  time_col: FLOW_START_MILLISECONDS
+  time_format: ms
+  id_cols: [IPV4_SRC_ADDR, IPV4_DST_ADDR, L4_SRC_PORT, FLOW_END_MILLISECONDS]
+  benign_labels: [Benign]
+
+priority_map:
+  P1: [Infiltration, Infilteration, Bot]
+  P2: [BruteForce, DoS, DDoS, Web Attacks, FTP-BruteForce, SSH-Bruteforce]
+  default_attack: P2
+
+# CSE-CIC-IDS2018 runs over ten days with one attack family per day: use 30-minute alternating blocks.
+split:
+  strategy: blocked
+  fit_until: 0.25
+  block_minutes: 30
+
+# ~20M flows: subsample benign traffic heavily (paper: "subsampled by time window").
+sample:
+  fit_benign: 100000
+  calibration: 50000
+  background_pool: 20000
+  tune: {benign_fraction: 0.01, attack_cap_per_class: 15000}
+  test: {benign_fraction: 0.01, attack_cap_per_class: 15000}
+
+detector: {type: iforest, n_estimators: 100, max_samples: 256}
+alert: {theta: 0.95}
+guard: {enabled: true, mode: conservative, p3_max_q: 0.99}
+
+shortcut_features: [L4_DST_PORT, MIN_TTL, MAX_TTL]
+
+evasion:
+  padding_len_regex: [LONGEST_FLOW_PKT, SHORTEST_FLOW_PKT, MIN_IP_PKT_LEN, MAX_IP_PKT_LEN]
+  padding_total: {IN_BYTES: IN_PKTS}
+  timing_mult_regex: [FLOW_DURATION_MILLISECONDS, DURATION_IN, DURATION_OUT, ".*_IAT_.*"]
+  timing_div_regex: [".*_SECOND_BYTES", ".*_AVG_THROUGHPUT"]
+  port_features: [L4_DST_PORT]
+
+testbed: {n_sensors: 4, batch_size: 256, max_flows: 60000}
+eval:
+  probe_seeds: [0, 1, 2]
+  detector_seeds: [0, 1, 2]
