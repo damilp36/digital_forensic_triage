@@ -26,6 +26,31 @@ Your approach section needs more sufficient details and analysis.
 STATUS AND NEXT ACTIONS  (updated 2026-11-23)
 ==========================================================================================
 
+0. CHECKLIST: MOVING TO ANOTHER COMPUTER
+----------------------------------------
+On this computer:
+  [x] Copy data/ to the drive (NetFlow CSVs, 13.3 GB; data/cache is optional, it rebuilds)
+  [ ] Get docs/ and the uncommitted edits across. docs/ is untracked; configs/nf_*.yaml and
+      README.md are modified. Either:
+        - commit and push:  git add docs configs README.md ; git commit ; git push
+        - or copy docs/, configs/ and README.md to the drive
+  [ ] CIC-IDS2017 CSVs (Box/Code4IT_OT/New Dataset/CIC2017, ~1 GB): nothing to do if Box
+      syncs on the other computer, otherwise copy that folder to the drive
+  [ ] Optional: copy runs/ (260 MB) to keep the dashboard, ledgers and XFT-Bench export;
+      otherwise rerun  xtriage evaluate --config configs/cic2017.yaml  (~41 min)
+  [ ] Do NOT copy .venv/ (rebuild it)
+
+On the new computer:
+  [ ] git clone https://github.com/damilp36/digital_forensic_triage
+  [ ] Copy data/ from the drive into the repo folder (data/raw/*.csv, flat)
+  [ ] Copy runs/ (if taken) and docs/ / configs/ / README.md (if not pushed)
+  [ ] python -m venv .venv ; .venv/Scripts/python -m pip install -e .[dev]
+  [ ] .venv/Scripts/python -m pytest -q   (17 tests pass)
+  [ ] Set base_dir in configs/cic2017.yaml to the CIC-IDS2017 folder on that machine
+  [ ] Smoke check: xtriage evaluate --config configs/smoke.yaml   (~3 min)
+  [ ] Check RAM: >= 32 GB for NF-CICIDS2018-v3, else do N0 (chunked loading) first
+  [ ] Continue with section 5 (N0, N1, then W1-W8)
+
 1. WHERE THINGS ARE
 -------------------
 Code: GitHub damilp36/digital_forensic_triage, branch main (commit c979de0 has the full
