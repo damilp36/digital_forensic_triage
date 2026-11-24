@@ -1,0 +1,31 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+% Replace the author details before submission.
+\title{Improving Digital Forensic Triage in Network-Based Anomaly Detection Systems: An Explainable Anomaly Detection Approach for Transparency, Reliability, and Investigator Decision-Making}
+\author{\IEEEauthorblockN{Damilola Popoola }}
+
+\begin{document}
+\maketitle
+
+\section{Problem Definition and Topic Description}
+Digital forensic investigations increasingly depend on large volumes of network traffic, system logs, and security alerts. Before a complete examination can begin, investigators must perform triage: the rapid identification and prioritization of events most likely to contain relevant evidence. Network-based anomaly detection systems can assist by identifying traffic that deviates from expected behavior, including activity that may not match known attack signatures. Network traffic is also recognized as an important forensic data source within incident-response investigations \cite{nist}. However, the practical value of anomaly detection is limited when a system produces numerous alerts, false positives, or unexplained anomaly scores.
+
+The central problem is therefore not simply detecting anomalous activity, but transforming a model output into a transparent, reliable, and investigator-usable triage decision. A high-performing black-box model may assign an anomaly score without explaining whether the decision was driven by an unusual destination port, abnormal packet frequency, rare protocol use, data-transfer volume, or a combination of features. Investigators must then reconstruct the alert's meaning and decide whether deeper examination is justified. This opacity can slow triage, produce inconsistent prioritization, and make it difficult to document why an event was selected. Moreover, an anomaly score is not forensic proof; it must be interpreted in context and linked to preserved evidence.
+
+This topic proposes a unified explainable anomaly-detection approach in which a black-box detector, SHAP, and rule induction perform complementary functions. First, a model detects suspicious network events and assigns risk scores. Second, SHAP explains each alert by estimating how the observed traffic features contributed to the model output \cite{shap}. This case-specific explanation helps the investigator understand why the event was flagged, but feature-attribution values alone may remain too technical or inconsistent for direct triage action. Rule induction therefore provides an additional operational layer. It derives concise IF--THEN rules from recurring combinations of traffic features, SHAP contributions, anomaly scores, and previously validated investigator decisions. For example, a rule may assign high priority when an anomaly score exceeds a threshold, destination-port rarity strongly contributes to the score, and outbound data volume is unusual. Rule induction has been investigated as a means of making intrusion-detection outcomes more transparent \cite{adewole}, while SHAP has shown relevance to forensic intrusion analysis \cite{hermosilla}.
+
+Rather than treating SHAP and decision rules as competing explanation methods, the proposed approach connects them. SHAP preserves detailed, event-level insight into the black-box detector, while induced rules convert recurring explanation patterns into consistent and investigator-readable triage guidance. Each triage record should retain the original network event, anomaly score, SHAP values, triggered rule, model and rule versions, timestamp, and investigator response. This traceability would allow an examiner to reconstruct the basis of an alert, verify the explanation against available evidence, and justify escalation or dismissal. By connecting accurate anomaly detection, case-specific SHAP explanations, and actionable decision rules, the topic addresses how explainable AI can improve the transparency, reliability, accountability, and practical usefulness of digital forensic triage.
+
+%The main challenge is ensuring that the combined explanations remain faithful, stable, concise, and forensically meaningful. Poorly induced rules may oversimplify model behavior, while unstable SHAP values may produce inconsistent guidance. Rules must therefore remain auditable, explanations must be linked to preserved evidence, and investigator feedback should refine rather than automatically confirm model decisions. The approach is intended to support, not replace, professional judgment. By connecting accurate anomaly detection, case-specific SHAP explanations, and actionable decision rules, the topic addresses how explainable AI can improve the transparency, reliability, accountability, and practical usefulness of digital forensic triage.
+
+\begin{thebibliography}{00}
+\bibitem{nist} K. Kent, S. Chevalier, T. Grance, and H. Dang, ``Guide to Integrating Forensic Techniques into Incident Response,'' NIST SP 800-86, 2006.
+\bibitem{shap} S. M. Lundberg and S.-I. Lee, ``A Unified Approach to Interpreting Model Predictions,'' in \emph{Adv. Neural Inf. Process. Syst.}, vol. 30, 2017.
+\bibitem{adewole} K. S. Adewole, A. Jacobsson, and P. Davidsson, ``Intrusion Detection Framework for Internet of Things with Rule Induction for Model Explanation,'' \emph{Sensors}, vol. 25, no. 6, Art. no. 1845, 2025.
+\bibitem{hermosilla} P. Hermosilla, S. Berr\'ios, and H. Allende-Cid, ``Explainable AI for Forensic Analysis: A Comparative Study of SHAP and LIME in Intrusion Detection Models,'' \emph{Appl. Sci.}, vol. 15, no. 13, Art. no. 7329, 2025.
+\end{thebibliography}
+
+\end{document}

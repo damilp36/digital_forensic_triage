@@ -1,0 +1,165 @@
+Requirements:
+Paper format should conform to the standard format for IEEE transactions. 
+
+Task Overview : Finish a 6-page (single space and double column) term paper including
+defining a specific problem, surveying and comparing existing work, developing a (better) solution, and
+evaluating your results through experiments and/or analytical analysis.
+
+Phase 1 : 1-page problem definition or topic description due
+    Status : Done
+    Output: Proposal.tex
+Phase 2 : 4-pages solutions and drafted evaluation plan due.
+    Status : on-going
+Phase 3 : 6-pages Final term paper.
+
+Overall goal: There could be two contributions,
+(1) Dataset, open and usable to other researchers, and 
+(2) discovery of limitations/weaknesses of any solutions.
+
+
+Latest Comment
+Great writing and topic! I like it. The main question is about how to evaluate the work.
+Your approach section needs more sufficient details and analysis.
+
+
+==========================================================================================
+STATUS AND NEXT ACTIONS  (updated 2026-11-23)
+==========================================================================================
+
+1. WHERE THINGS ARE
+-------------------
+Code: GitHub damilp36/digital_forensic_triage, branch main (commit c979de0 has the full
+      implementation). README.md explains the layout, commands and design decisions.
+Not in git (gitignored, copy by hand if needed):
+  data/raw/    13.3 GB   NetFlow v3 CSVs (UQ download):
+                         NF-UNSW-NB15-v3.csv (577 MB), NF-CICIDS2018-v3.csv (4.2 GB),
+                         NF-BoT-IoT-v3.csv (3.8 GB), NF-ToN-IoT-v3.csv (5.3 GB),
+                         NetFlow_v3_Features.csv (feature descriptions)
+  data/cache/  330 MB    Parquet cache; rebuilt automatically, no need to copy
+  runs/        260 MB    run outputs (ledgers, artifacts, xft-bench export)
+Copied into docs/results_cic2017/ so they travel with git: summary.md (all tables), the
+per-experiment CSVs and the three figures from the full CIC-IDS2017 run.
+CIC-IDS2017 CSVs are NOT in data/raw: configs/cic2017.yaml points at
+  C:/Users/popson/Box/Code4IT_OT/New Dataset/CIC2017  (edit base_dir on the new machine).
+
+2. SETUP ON A NEW COMPUTER
+--------------------------
+  git clone https://github.com/damilp36/digital_forensic_triage
+  cd digital_forensic_triage
+  python -m venv .venv
+  .venv/Scripts/python -m pip install -e .[dev]     (Linux/macOS: .venv/bin/...)
+  .venv/Scripts/python -m pytest -q                 (17 tests should pass)
+  copy the NetFlow CSVs into data/raw/ (flat, same file names as above)
+  set base_dir in configs/cic2017.yaml to wherever CIC-IDS2017 lives on that machine
+  smoke check:  xtriage evaluate --config configs/smoke.yaml   (~3 min, synthetic data)
+RAM: this machine has 32 GB. NF-CICIDS2018-v3 is 20.1M rows and the loader reads the whole
+CSV at once; use a machine with >= 32 GB or do action N0 first.
+
+3. WHAT IS DONE
+---------------
+- S1-S6, testbed, dashboard, harness (B1-B5, ablations, RQ1-RQ5, probes), XFT-Bench export.
+- Full CIC-IDS2017 run: 5 seeds, 41 min. Results in docs/results_cic2017/summary.md.
+- NetFlow configs now point at the downloaded files; class names checked against the data:
+    UNSW-NB15 v3: 2.37M flows, 2015-01-22 .. 2015-02-18. P1 = Exploits 42,748, Backdoor 4,659,
+                  Shellcode 2,381, Worms 158. P2 = Fuzzers, Generic, Reconnaissance, DoS, Analysis.
+    CIC-IDS2018 v3: 20.1M flows, 2018-02-14 .. 2018-03-02. P1 = Bot 207,703,
+                  Infilteration 188,152 (sic), SQL_Injection 440. All DoS/DDoS/brute force = P2.
+- Not yet run: either NetFlow config, the cross-corpus test, BoT-IoT / ToN-IoT (no configs yet).
+
+4. WHAT CIC-IDS2017 SHOWED (headline)
+-------------------------------------
+Workload@90 = share of alerts an analyst must read to find 90% of alerted P1 events (lower = better).
+  XTriage 0.20 +/- 0.33 | score only (B1) 0.45 | raw-feature rules (B3) 0.57 | tree surrogate (B4) 0.79
+  no guard 0.57 | guard as worded in Phase 2 0.46 | no SHAP predicates 0.21 (same as XTriage)
+Holds up: replay 100%, tamper detected at exact seq, ~1.8 KB/record; SHAP more faithful than LIME
+  (deletion AUC 0.75 vs 1.00, random 0.97); stable across background sets (top-5 Jaccard 0.97);
+  rules turn strong detectors into good triage (autoencoder 0.73 -> 0.09, XGBoost 0.88 -> 0.04).
+
+5. WEAKNESSES AND NEXT ACTIONS
+------------------------------
+Each weakness is a paper finding (contribution 2). For each: what we saw, what to do, what to
+report. Do them roughly in this order.
+
+N0  Make NF-CICIDS2018 loadable (prerequisite)
+    Do: in src/xtriage/data/loaders.py, read CSVs in chunks (pd.read_csv chunksize, float32),
+        and optionally subsample benign rows per time window while reading.
+    Done when: xtriage prepare --config configs/nf_cse_cic_ids2018_v3.yaml finishes in < 16 GB.
+
+N1  Run both NetFlow corpora + cross-corpus test (needed for every claim below)
+        xtriage evaluate --config configs/nf_unsw_nb15_v3.yaml
+        xtriage evaluate --config configs/nf_cse_cic_ids2018_v3.yaml
+        xtriage cross --train configs/nf_unsw_nb15_v3.yaml --test configs/nf_cse_cic_ids2018_v3.yaml
+    Report: does each CIC-2017 weakness repeat on other data? (same tables, 3 corpora side by side)
+
+W1  Isolation forest barely detects P1 attacks
+    Saw: AUROC 0.71 overall, ~0.50 on P1; only 4.5% of P1 flows become alerts (det_p1_alerted
+         0.045), so workload rests on ~43 P1 alerts per seed -> the +/- 0.33 spread. Late test half
+         misses Bot and Infiltration almost entirely (P1 alerting 1.0 early vs 0.04 late).
+    Do: (a) run main with detector: {type: autoencoder} (AUROC 0.90 on CIC-2017) and compare;
+        (b) sweep alert threshold theta 0.90/0.95/0.99 and report P1 recall vs alert volume;
+        (c) add a periodic recalibration variant for the time-shift probe.
+    Report: "unsupervised detector choice bounds triage quality; rules cannot rescue missed P1".
+    Decide: primary detector for the paper = autoencoder if it holds on NetFlow.
+
+W2  SHAP predicates add nothing on CIC-2017
+    Saw: Abl-no-SHAP-predicates = XTriage on every metric; rule fidelity to SHAP ~0.06
+         (rules pick traffic bins that are not among the detector's top-5 reasons).
+    Do: (a) check whether this repeats on NetFlow (N1); (b) run a "predicates + band only"
+        representation (no raw bins) to see whether SHAP alone carries triage signal;
+        (c) try top_k 3 and 10.
+    Report honestly: explanation-augmented rules are not automatically more faithful or better;
+        oracle labels drive rules toward features the detector does not use.
+
+W3  Guard works but is blunt
+    Saw: 71% of alerts contested, mostly because only the catch-all rule fired; precision ~0.003;
+         still catches 60-85% of P1 events a rule would have dismissed. It is the whole gain.
+    Do: (a) replace "default rule fired" with "rule precision on tune < tau" (store per-rule tune
+        precision in the ruleset); (b) plot catch rate vs contested rate as tau / p3_max_q vary;
+        (c) add this variant to VARIANTS in src/xtriage/eval/experiments.py.
+    Target: contested rate < 30% with catch rate >= 60%.
+
+W4  Rules are brittle to features the detector ignores
+    Saw: setting destination port to 443 leaves the score unchanged (dq ~ 0) but changes the fired
+         rule for 78% of attack alerts and the tier for 36%; timing x5 demotes 19% of P1.
+    Do: (a) variant that drops port bins from z (or maps port -> service class);
+        (b) variant that only allows rule conditions on the alert's top-k SHAP features;
+        (c) rerun probe_evasion on both and on NetFlow (L4_DST_PORT).
+    Report: tier flip rate under perturbation, before vs after.
+
+W5  Rules collapse under label noise
+    Saw: eta = 0.1 -> P1 F1 0.79 -> 0.17, workload 0.03 -> 0.58 (P1 is rare, few flips erase it).
+    Do: (a) bagged RIPPER (e.g. 11 bootstraps, majority vote) or minimum support for P1 rules;
+        (b) rerun the eta sweep (0, 0.05, 0.1, 0.2) for plain vs robust.
+    Report: noise level at which P1 F1 drops below 0.5, plain vs robust.
+
+W6  Retraining the detector changes the explanations
+    Saw: top-5 Jaccard 0.27 across detector seeds (vs 0.97 across background sets), Kendall tau
+         0.69. Phase 2 hypothesis "near-threshold alerts are less stable" NOT supported (low band
+         0.33 vs high band 0.20).
+    Do: (a) n_estimators 100 -> 300 -> 1000 and remeasure Jaccard; (b) repeat for autoencoder.
+    Report: as a limitation of per-model SHAP for forensic evidence; update the hypothesis text.
+
+W7  "Shortcut" features are not shortcuts here
+    Saw: removing Destination Port and Init_Win_bytes_* improved AUROC 0.71 -> 0.75.
+    Do: repeat on UNSW-NB15 with L4_DST_PORT, MIN_TTL, MAX_TTL (TTL is a known UNSW-NB15 artefact).
+    Report: the shortcut effect is corpus-specific.
+
+W8  Statistics too weak
+    Saw: with 5 seeds Wilcoxon cannot reach p < 0.05 two-sided (minimum 0.0625).
+    Do: seeds: [0..9] in the configs (doubles runtime: CIC-2017 ~80 min), or pool seeds x corpora.
+
+6. PAPER WORK (instructor: "how to evaluate the work"; approach needs more detail)
+------------------------------------------------------------------------------------
+P1  Phase2.tex approach section: add the details now fixed by the implementation -
+    isolation-forest score and exact TreeSHAP; z(x) definition; JRip-style ordered RIPPER;
+    guard modes; ledger record fields and hash chain; blocked split for CIC-IDS2017.
+P2  Evaluation section: RQ1-RQ5 -> metric -> baseline -> test table; Workload@90 / Recall@b /
+    NDCG definitions; seeds and Wilcoxon; datasets table (3 corpora above).
+P3  Phase 3 results: main table per corpus, stability figure, noise figure, limitations list
+    (W1-W8) as the second contribution.
+P4  XFT-Bench (contribution 1): export exists for CIC-2017 (runs/cic2017/xft-bench); export
+    NetFlow runs too; check dataset licences before publishing; pick a host (Zenodo / HF).
+
+Optional later: configs for NF-BoT-IoT-v3 and NF-ToN-IoT-v3 (already downloaded) for more
+corpora / stronger statistics.
+

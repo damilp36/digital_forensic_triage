@@ -6,8 +6,8 @@ seed: 0
 seeds: [0, 1, 2, 3, 4]
 dataset:
   loader: netflow_v3
-  base_dir: data/raw/NF-UNSW-NB15-v3
-  files: ["*.csv"]
+  base_dir: data/raw
+  files: ["NF-UNSW-NB15-v3.csv"]
   label_col: Label
   attack_col: Attack
   time_col: FLOW_START_MILLISECONDS

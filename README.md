@@ -60,12 +60,12 @@ and `xft-bench/`.
 | Config | Corpus | Status |
 |---|---|---|
 | `cic2017` | CIC-IDS2017, CICFlowMeter CSVs (original release) | runs from the local copy |
-| `nf_unsw_nb15_v3` | NF-UNSW-NB15-v3 (UQ NetFlow v3) | download needed |
-| `nf_cse_cic_ids2018_v3` | NF-CSE-CIC-IDS2018-v3 | download needed |
+| `nf_unsw_nb15_v3` | NF-UNSW-NB15-v3 (UQ NetFlow v3) | manual download (see below) |
+| `nf_cse_cic_ids2018_v3` | NF-CSE-CIC-IDS2018-v3 | manual download (see below) |
 
 The NetFlow v3 files are on UQ Research Data Manager (links on
-<https://staff.itee.uq.edu.au/marius/NIDS_datasets/>), which requires signing in. Extract them into
-`data/raw/NF-UNSW-NB15-v3/` and `data/raw/NF-CSE-CIC-IDS2018-v3/`. The loader takes the identifier
+<https://staff.itee.uq.edu.au/marius/NIDS_datasets/>), which requires signing in. Put the CSVs directly in
+`data/raw/` as `NF-UNSW-NB15-v3.csv` and `NF-CICIDS2018-v3.csv` (the names in the UQ download). The loader takes the identifier
 columns (`IPV4_*_ADDR`, `L4_SRC_PORT`, `FLOW_*_MILLISECONDS`) and labels (`Label`, `Attack`) by name;
 every other numeric column is a model feature.
 

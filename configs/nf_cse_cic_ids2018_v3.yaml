@@ -6,8 +6,8 @@ seed: 0
 seeds: [0, 1, 2, 3, 4]
 dataset:
   loader: netflow_v3
-  base_dir: data/raw/NF-CSE-CIC-IDS2018-v3
-  files: ["*.csv"]
+  base_dir: data/raw
+  files: ["NF-CICIDS2018-v3.csv"]
   label_col: Label
   attack_col: Attack
   time_col: FLOW_START_MILLISECONDS
@@ -16,8 +16,8 @@ dataset:
   benign_labels: [Benign]
 
 priority_map:
-  P1: [Infiltration, Infilteration, Bot]
-  P2: [BruteForce, DoS, DDoS, Web Attacks, FTP-BruteForce, SSH-Bruteforce]
+  P1: [Infilteration, Infiltration, Bot, SQL_Injection]
+  P2: [DDOS_attack-HOIC, DDoS_attacks-LOIC-HTTP, DDOS_attack-LOIC-UDP, FTP-BruteForce, SSH-Bruteforce, DoS_attacks-SlowHTTPTest, DoS_attacks-Hulk, DoS_attacks-GoldenEye, DoS_attacks-Slowloris, Brute_Force_-Web, Brute_Force_-XSS]
   default_attack: P2
 
 # CSE-CIC-IDS2018 runs over ten days with one attack family per day: use 30-minute alternating blocks.
