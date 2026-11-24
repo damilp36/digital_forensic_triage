@@ -18,7 +18,8 @@ from .. import PRIORITY_ACTION
 from ..data.prepare import Prepared, noisy_oracle
 from .detector import Detector, build_detector
 from .explain import Explainer, top_k
-from .guard import apply_guard
+from ..config import deep_merge
+from .guard import apply_guard, guard_stats
 from .represent import Representation, band_of
 from .rules import RuleList, build_rules, rules_from_dict
 
@@ -71,8 +72,12 @@ class XTriageEngine:
     def fit(cls, prep: Prepared, cfg: dict, seed: int, *, detector: Detector | None = None,
             background_idx: int = 0, parts=None, learner: str | None = None, guard: bool | str | None = None,
             explain_method: str | None = None, eta: float | None = None, tune_scored: Scored | None = None,
-            explainer: Explainer | None = None):
-        """Train S1 (unless given), then S3/S4 on tune-window alerts labelled by the oracle."""
+            explainer: Explainer | None = None, overrides: dict | None = None):
+        """Train S1 (unless given), then S3/S4 on tune-window alerts labelled by the oracle.
+
+        ``overrides`` is deep-merged into ``cfg`` (e.g. {"represent": {"gate_disc": True}})."""
+        if overrides:
+            cfg = deep_merge(cfg, overrides)
         theta = cfg["alert"]["theta"]
         if detector is None:
             detector = fit_detector(prep, cfg, seed)
@@ -83,8 +88,9 @@ class XTriageEngine:
         if tune_scored is None:
             tune_scored = score_and_explain(detector, explainer, Xt, theta)
         ai = tune_scored.alert_idx
-        rep = Representation(prep.feature_names, cfg["represent"]["n_bins"], cfg["represent"]["bands"],
-                             cfg["explain"]["top_k"], parts or cfg["represent"]["parts"])
+        rcfg = cfg["represent"]
+        rep = Representation(prep.feature_names, rcfg["n_bins"], rcfg["bands"], cfg["explain"]["top_k"],
+                             parts or rcfg["parts"], rcfg.get("exclude", ()), rcfg.get("gate_disc", False))
         rep.fit(Xt[ai])
         y_clean = prep.tune.meta["priority"].to_numpy()[ai]
         y = noisy_oracle(y_clean, cfg["oracle"]["eta"] if eta is None else eta, seed)
@@ -96,6 +102,9 @@ class XTriageEngine:
             gcfg["enabled"], gcfg["mode"] = True, guard
         elif guard is not None:
             gcfg["enabled"] = guard
+        if gcfg.get("enabled", True) and gcfg.get("mode") == "calibrated":
+            _, rid, _ = rules.apply(Z)
+            gcfg["stats"] = guard_stats(rid, band_of(tune_scored.q[ai], rep.bands), y)
         eng = cls(cfg, prep.feature_names, detector, explainer, rep, rules, rep.parts, gcfg, theta)
         eng.tune_scored = tune_scored
         eng.tune_labels = y
@@ -110,7 +119,7 @@ class XTriageEngine:
         Z = self.rep.transform(X_alerts, phi, q_alerts, self.parts)
         prio, rid, is_def = self.rules.apply(Z)
         band = band_of(q_alerts, self.rep.bands)
-        tier, contested, reason = apply_guard(prio, is_def, q_alerts, band, self.guard_cfg)
+        tier, contested, reason = apply_guard(prio, is_def, q_alerts, band, self.guard_cfg, rid)
         return Triage(prio, rid, is_def, band, tier, contested, reason, time.perf_counter() - t0)
 
     def process(self, X: np.ndarray, parallel: bool = True):

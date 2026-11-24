@@ -38,7 +38,7 @@ def cond_features(conds, disc_only: bool = False) -> list[str]:
         if kind == "why":
             if disc_only or (val == "T") != (op == "=="):
                 continue
-        elif op != "==":
+        elif op != "==" or val == "-":  # '-' = SHAP-gated bin: feature was not a reason
             continue
         out.add(feat)
     return sorted(out)
@@ -146,13 +146,38 @@ def _stratified_cap(y: np.ndarray, cap: int | None, rng: np.random.Generator) ->
     return np.sort(np.concatenate(keep))
 
 
+def filter_noisy_labels(Z: pd.DataFrame, y: np.ndarray, seed: int = 0, folds: int = 5,
+                        min_prob: float = 0.2) -> np.ndarray:
+    """Classification filter (Brodley & Friedl, 1999): keep a training example unless an out-of-fold
+    random forest gives its oracle label probability < ``min_prob``. Random label flips land in
+    regions dominated by another class and are removed; true rare-class clusters keep their labels."""
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import StratifiedKFold, cross_val_predict
+
+    y = np.asarray(y, dtype=object)
+    classes, counts = np.unique(y, return_counts=True)
+    folds = int(min(folds, counts.min())) if len(classes) > 1 else 0
+    if folds < 2:
+        return np.ones(len(y), dtype=bool)
+    D = pd.get_dummies(Z).astype(np.uint8).to_numpy()
+    rf = RandomForestClassifier(n_estimators=100, min_samples_leaf=3, n_jobs=-1, random_state=seed)
+    proba = cross_val_predict(rf, D, y, cv=StratifiedKFold(folds, shuffle=True, random_state=seed),
+                              method="predict_proba")
+    col = {c: i for i, c in enumerate(classes)}
+    p_own = proba[np.arange(len(y)), [col[v] for v in y]]
+    return p_own >= min_prob
+
+
 class OrderedRipper(RuleList):
     learner = "ripper"
 
-    def __init__(self, max_conds=4, max_rules=40, k=2, max_train=15000, seed=0, **_):
+    def __init__(self, max_conds=4, max_rules=40, k=2, max_train=15000, seed=0, label_filter=False,
+                 label_filter_min_prob=0.2, **_):
         super().__init__()
         self.max_conds, self.max_rules, self.k = max_conds, max_rules, k
         self.max_train, self.seed = max_train, seed
+        self.label_filter, self.min_prob = bool(label_filter), float(label_filter_min_prob)
+        self.filtered = 0
 
     def fit(self, Z: pd.DataFrame, y: np.ndarray) -> "OrderedRipper":
         import wittgenstein as lw
@@ -161,6 +186,11 @@ class OrderedRipper(RuleList):
         rng = np.random.default_rng(self.seed)
         sub = _stratified_cap(y, self.max_train, rng)
         Zs, ys = Z.iloc[sub].reset_index(drop=True), y[sub]
+        if self.label_filter:
+            keep = filter_noisy_labels(Zs, ys, self.seed, min_prob=self.min_prob)
+            self.filtered = int((~keep).sum())
+            log.info("label filter removed %d of %d training labels", self.filtered, len(ys))
+            Zs, ys = Zs[keep].reset_index(drop=True), ys[keep]
         classes, counts = np.unique(ys, return_counts=True)
         order = [c for _, c in sorted(zip(counts, classes))]
         self.default = order[-1]

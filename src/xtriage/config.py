@@ -26,6 +26,8 @@ DEFAULTS: dict[str, Any] = {
         "drop_cols": [],
         "benign_labels": ["BENIGN", "Benign", "benign", "0"],
         "max_rows": None,  # optional cap when loading (debug)
+        "chunk_rows": 1000000,  # CSV rows read per chunk
+        "benign_keep": None,  # keep this deterministic fraction of benign rows at load (large corpora)
         "synthetic": {"n": 60000},
     },
     "priority_map": {"P1": [], "P2": [], "default_attack": "P2"},
@@ -64,7 +66,8 @@ DEFAULTS: dict[str, Any] = {
         "max_alerts_slow": 3000,  # cap for KernelSHAP / LIME runs
     },
     "alert": {"theta": 0.95},
-    "represent": {"n_bins": 5, "bands": [0.99, 0.999], "parts": ["disc", "why", "band"]},
+    "represent": {"n_bins": 5, "bands": [0.99, 0.999], "parts": ["disc", "why", "band"],
+                  "exclude": [], "gate_disc": False},
     "rules": {
         "learner": "ripper",  # ripper | tree | anchors
         "max_conds": 4,
@@ -75,8 +78,11 @@ DEFAULTS: dict[str, Any] = {
         "tree_min_leaf": 20,
         "anchor_precision": 0.9,
         "anchor_min_support": 10,
+        "label_filter": False,  # drop oracle labels an out-of-fold forest finds unlikely (noise)
+        "label_filter_min_prob": 0.2,
     },
-    "guard": {"enabled": True, "mode": "conservative", "p3_max_q": 0.99},
+    # mode: conservative | review | calibrated (tau and smoothing are used by calibrated only)
+    "guard": {"enabled": True, "mode": "conservative", "p3_max_q": 0.99, "tau": 0.01, "smoothing": 20.0},
     "oracle": {"eta": 0.0},
     "shortcut_features": [],
     "evasion": {
@@ -102,6 +108,9 @@ DEFAULTS: dict[str, Any] = {
         "background_sizes": [10, 50, 100, 500],
         "detectors": ["autoencoder", "xgboost"],
         "export_shap_all_flows": False,
+        "guard_taus": [0.002, 0.005, 0.01, 0.02, 0.05, 0.1],
+        "theta_sweep": [0.9, 0.95, 0.99],
+        "forest_sizes": [100, 300, 1000],
     },
 }
 

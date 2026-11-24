@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+import itertools
 import logging
 import re
 
@@ -11,8 +13,12 @@ import pandas as pd
 from ..data.prepare import Prepared
 from ..engine.explain import Explainer
 from ..engine.pipeline import XTriageEngine, fit_detector, score_and_explain
-from .experiments import _subsample_alerts, evaluate_engine
+from ..engine.represent import band_of
+from .experiments import VARIANTS, _restrict, _subsample_alerts, evaluate_engine, resolve_overrides
 from .metrics import detection_metrics, jaccard_rows, kendall_rows
+
+EVASION_METHODS = ("XTriage", "Fix-SHAP-gated-bins", "Fix-no-port-bins", "Fix-calibrated-guard")
+NOISE_METHODS = ("XTriage", "Fix-label-filter")
 
 log = logging.getLogger(__name__)
 
@@ -181,8 +187,9 @@ def perturb(X: np.ndarray, names: list[str], ecfg: dict, kind: str, value) -> np
 
 
 def probe_evasion(prep: Prepared, cfg: dict, cache: dict, n: int = 2000, seed: int = 0) -> pd.DataFrame:
-    """Do rules stop firing faster than the score changes?  (Feature-space sensitivity only.)"""
-    det, ex, eng, sc = cache["detector"], cache["explainer"], cache["engines"]["XTriage"], cache["test"]
+    """Do rules stop firing faster than the score changes?  (Feature-space sensitivity only.)
+    Run for XTriage and for the representation / guard fixes, on the same perturbed flows."""
+    det, ex, sc = cache["detector"], cache["explainer"], cache["test"]
     truth = prep.test.meta["priority"].to_numpy()
     ai = sc.alert_idx
     att = np.where(truth[ai] != "P3")[0]
@@ -191,33 +198,40 @@ def probe_evasion(prep: Prepared, cfg: dict, cache: dict, n: int = 2000, seed: i
     pos = att[_subsample_alerts(truth[ai][att], n, seed)]
     idx = ai[pos]
     X = prep.test.X.to_numpy(dtype=np.float32)[idx]
-    ref = eng.triage(X, sc.phi[pos], sc.q[idx])
     ecfg = cfg["evasion"]
-    rows = []
     variants = [("padding", v) for v in ecfg.get("padding_bytes", [])] + \
                [("timing", v) for v in ecfg.get("timing_factors", [])] + \
                [("port", v) for v in ecfg.get("ports", []) if ecfg.get("port_features")]
+    perturbed = {}
     for kind, v in variants:
         Xp = perturb(X, prep.feature_names, ecfg, kind, v)
         if np.allclose(Xp, X):
             continue
         s = det.score(Xp)
         q = det.percentile(s)
-        still = q >= cfg["alert"]["theta"]
         phi, _ = ex.explain(Xp)
-        tr = eng.triage(Xp, phi, q)
+        perturbed[(kind, v)] = (Xp, s, q, phi)
+    rows = []
+    for method in EVASION_METHODS:
+        eng = cache["engines"].get(method)
+        if eng is None:
+            continue
+        ref = eng.triage(X, sc.phi[pos], sc.q[idx])
         p1 = ref.tier == "P1"
-        rows.append({
-            "probe": "evasion", "variant": f"{kind}={v}", "n": len(idx),
-            "mean_abs_dq": float(np.mean(np.abs(q - sc.q[idx]))),
-            "mean_ds": float(np.mean(s - sc.s[idx])),
-            "evaded_detection": float(np.mean(~still)),
-            "rule_changed": float(np.mean(tr.rule_id != ref.rule_id)),
-            "tier_changed": float(np.mean(tr.tier != ref.tier)),
-            "tier_changed_still_alerted": float(np.mean((tr.tier != ref.tier)[still])) if still.any() else np.nan,
-            "p1_downgraded": float(np.mean(tr.tier[p1] != "P1")) if p1.any() else np.nan,
-            "became_contested": float(np.mean(tr.contested & ~ref.contested)),
-        })
+        for (kind, v), (Xp, s, q, phi) in perturbed.items():
+            still = q >= cfg["alert"]["theta"]
+            tr = eng.triage(Xp, phi, q)
+            rows.append({
+                "probe": "evasion", "method": method, "variant": f"{kind}={v}", "n": len(idx),
+                "mean_abs_dq": float(np.mean(np.abs(q - sc.q[idx]))),
+                "mean_ds": float(np.mean(s - sc.s[idx])),
+                "evaded_detection": float(np.mean(~still)),
+                "rule_changed": float(np.mean(tr.rule_id != ref.rule_id)),
+                "tier_changed": float(np.mean(tr.tier != ref.tier)),
+                "tier_changed_still_alerted": float(np.mean((tr.tier != ref.tier)[still])) if still.any() else np.nan,
+                "p1_downgraded": float(np.mean(tr.tier[p1] != "P1")) if p1.any() else np.nan,
+                "became_contested": float(np.mean(tr.contested & ~ref.contested)),
+            })
     return pd.DataFrame(rows)
 
 
@@ -229,10 +243,105 @@ def probe_noise(prep: Prepared, cfg: dict, cache: dict, seed: int) -> pd.DataFra
     truth = prep.test.meta["priority"].to_numpy()
     X = prep.test.X.to_numpy(dtype=np.float32)
     rows = []
-    for eta in cfg["eval"]["eta_sweep"]:
-        eng = XTriageEngine.fit(prep, cfg, seed, detector=det, explainer=ex, tune_scored=tsc, eta=eta)
+    for method, eta in itertools.product(NOISE_METHODS, cfg["eval"]["eta_sweep"]):
+        parts, learner, guard, ov = VARIANTS[method]
+        eng = XTriageEngine.fit(prep, cfg, seed, detector=det, explainer=ex, tune_scored=tsc, eta=eta,
+                                parts=parts, learner=learner, guard=guard, overrides=resolve_overrides(ov, cfg))
         m, _ = evaluate_engine(eng, X, sc, truth, int((truth == "P1").sum()), cfg["eval"]["budgets"])
-        rows.append({"probe": "oracle-noise", "variant": f"eta={eta}", "eta": eta, "seed": seed,
+        rows.append({"probe": "oracle-noise", "method": method, "variant": f"eta={eta}", "eta": eta, "seed": seed,
+                     "labels_filtered": getattr(eng.rules, "filtered", 0),
                      **{k: m[k] for k in ("macro_f1", "macro_f1_rules", "p1_f1", "coverage", "n_rules", "mean_rule_len",
                                           "fidelity", "workload@90_frac", "ndcg", "contested_rate", "guard_catch_rate")}})
+    return pd.DataFrame(rows)
+
+
+# ------------------------------------------------------------- guard trade-off
+
+
+def probe_guard(prep: Prepared, cfg: dict, cache: dict) -> pd.DataFrame:
+    """W3: contested rate vs. severe errors caught as the calibrated guard's tau varies, with the
+    fixed-trigger guard and no guard as reference points."""
+    sc = cache["test"]
+    truth = prep.test.meta["priority"].to_numpy()
+    X = prep.test.X.to_numpy(dtype=np.float32)
+    total_p1 = int((truth == "P1").sum())
+    keep = ("workload@90_frac", "ndcg", "macro_f1", "p1_f1", "contested_rate", "guard_catch_rate",
+            "guard_precision", "severe_errors", "severe_caught")
+    rows = []
+    for name in ("Abl-no-guard", "XTriage"):
+        if name in cache["engines"]:
+            m, _ = evaluate_engine(cache["engines"][name], X, sc, truth, total_p1, cfg["eval"]["budgets"])
+            rows.append({"probe": "guard", "variant": name, "tau": np.nan, **{k: m.get(k) for k in keep}})
+    cal = cache["engines"].get("Fix-calibrated-guard")
+    if cal is not None:
+        for tau in cfg["eval"]["guard_taus"]:
+            eng = copy.copy(cal)
+            eng.guard_cfg = {**cal.guard_cfg, "tau": tau}
+            m, _ = evaluate_engine(eng, X, sc, truth, total_p1, cfg["eval"]["budgets"])
+            rows.append({"probe": "guard", "variant": "calibrated", "tau": tau, **{k: m.get(k) for k in keep}})
+    return pd.DataFrame(rows)
+
+
+# ------------------------------------------------------------ alert threshold
+
+
+def probe_theta(prep: Prepared, cfg: dict, cache: dict, seed: int) -> pd.DataFrame:
+    """W1: how many P1 events reach triage at all, and what triage does with them, as theta varies.
+    SHAP is computed once at the lowest theta and restricted for the higher ones."""
+    det, ex = cache["detector"], cache["explainer"]
+    thetas = sorted(cfg["eval"]["theta_sweep"])
+    Xtu = prep.tune.X.to_numpy(dtype=np.float32)
+    Xte = prep.test.X.to_numpy(dtype=np.float32)
+    truth = prep.test.meta["priority"].to_numpy()
+    att = prep.test.meta["is_attack"].to_numpy()
+    tsc = score_and_explain(det, ex, Xtu, thetas[0])
+    esc = score_and_explain(det, ex, Xte, thetas[0])
+    rows = []
+    for th in thetas:
+        t_sc = _restrict(tsc, np.where(tsc.q[tsc.alert_idx] >= th)[0])
+        e_sc = _restrict(esc, np.where(esc.q[esc.alert_idx] >= th)[0])
+        dm = detection_metrics(e_sc.s, e_sc.alert, att, truth)
+        eng = XTriageEngine.fit(prep, cfg, seed, detector=det, explainer=ex, tune_scored=t_sc,
+                                overrides={"alert": {"theta": th}})
+        m, _ = evaluate_engine(eng, Xte, e_sc, truth, int((truth == "P1").sum()), cfg["eval"]["budgets"])
+        rows.append({"probe": "theta", "variant": f"theta={th}", "theta": th, "seed": seed,
+                     "alerts": int(e_sc.alert.sum()), "det_p1_alerted": dm.get("p1_alerted"),
+                     **{k: m.get(k) for k in ("recall@1000", "workload@90", "workload@90_frac", "ndcg",
+                                              "macro_f1", "p1_f1", "contested_rate")}})
+    return pd.DataFrame(rows)
+
+
+# -------------------------------------------------- detector size vs stability
+
+
+def probe_forest_size(prep: Prepared, cfg: dict, idx: np.ndarray) -> pd.DataFrame:
+    """W6: does a larger isolation forest make SHAP explanations agree across retraining seeds?"""
+    if cfg["detector"]["type"] != "iforest":
+        return pd.DataFrame()
+    X = prep.test.X.to_numpy(dtype=np.float32)[idx]
+    k = cfg["explain"]["top_k"]
+    seeds = cfg["eval"]["stability_seeds"]
+    rows = []
+    for n_est in cfg["eval"]["forest_sizes"]:
+        c = copy.deepcopy(cfg)
+        c["detector"]["n_estimators"] = int(n_est)
+        phis, qs = {}, {}
+        for sd in seeds:
+            det = fit_detector(prep, c, sd)
+            ex = Explainer.from_config(det, prep.backgrounds[0], prep.feature_names, c["explain"], seed=sd)
+            phis[sd], _ = ex.explain(X)
+            qs[sd] = det.percentile(det.score(X))
+        pairs = list(itertools.combinations(seeds, 2))
+        jac = np.mean([jaccard_rows(phis[a], phis[b], k) for a, b in pairs], axis=0)
+        tau = np.mean([kendall_rows(phis[a], phis[b]) for a, b in pairs], axis=0)
+        dq = np.mean([np.abs(qs[a] - qs[b]) for a, b in pairs], axis=0)
+        band = band_of(qs[seeds[0]], cfg["represent"]["bands"])
+        row = {"probe": "forest-size", "n_estimators": int(n_est), "n": len(idx),
+               "jaccard_seed": float(jac.mean()), "kendall_seed": float(tau.mean()),
+               "mean_abs_dq_seed": float(dq.mean())}
+        for b in ("low", "medium", "high"):
+            if (band == b).any():
+                row[f"jaccard_seed[{b}]"] = float(jac[band == b].mean())
+        rows.append(row)
+        log.info("forest size %d: seed Jaccard %.3f", n_est, row["jaccard_seed"])
     return pd.DataFrame(rows)

@@ -48,6 +48,16 @@ def test_label_normalisation():
     assert normalise_label("Web Attack \x96 Sql Injection") == "Web Attack - Sql Injection"
 
 
+def test_benign_subsample_is_deterministic_and_chunk_free():
+    from xtriage.data.loaders import keep_benign_row
+
+    rows = np.arange(200_000)
+    whole = keep_benign_row(rows, 0.1)
+    chunked = np.concatenate([keep_benign_row(rows[i:i + 7_000], 0.1) for i in range(0, len(rows), 7_000)])
+    assert (whole == chunked).all()
+    assert 0.095 < whole.mean() < 0.105
+
+
 def test_time_split_is_ordered(prep):
     assert prep.tune.meta["ts"].max() <= prep.test.meta["ts"].min()
     assert prep.tune.meta["ts"].is_monotonic_increasing
@@ -130,6 +140,43 @@ def test_guard_modes():
     assert list(tier) == ["P1", "P2", "P2", "P1"]  # escalation kept, dismissal raised
     tier, _, _ = apply_guard(prio, is_def, q, band, {"enabled": True, "mode": "review", "p3_max_q": 0.99})
     assert list(tier) == ["P2", "P2", "P2", "P1"]
+
+
+def test_calibrated_guard_contests_leaky_cells_only():
+    from xtriage.engine.guard import guard_stats
+
+    rid = np.array(["R1"] * 100 + ["R2"] * 100, dtype=object)
+    band = np.array(["low"] * 200, dtype=object)
+    y = np.array(["P3"] * 100 + ["P1"] * 10 + ["P3"] * 90, dtype=object)  # R2 lets 10% P1 through
+    g = {"enabled": True, "mode": "calibrated", "tau": 0.05, "smoothing": 0.0, "stats": guard_stats(rid, band, y)}
+    prio = np.array(["P3", "P3", "P1"], dtype=object)
+    tier, cont, reason = apply_guard(prio, np.zeros(3, bool), np.array([0.96] * 3),
+                                     np.array(["low"] * 3, dtype=object), g, np.array(["R1", "R2", "R9"], dtype=object))
+    assert list(tier) == ["P3", "P2", "P1"]
+    assert list(cont) == [False, True, True] and reason[2] == "escalate-rule-on-low-score"
+
+
+def test_shap_gated_bins_and_excluded_features():
+    rep = Representation(["a", "b", "c"], n_bins=2, top_k=1, exclude=["c"], gate_disc=True)
+    rep.fit(np.array([[0, 0, 0], [1, 1, 1]]))
+    Z = rep.transform(np.array([[5, 5, 5]]), np.array([[0.9, -2.0, 0.1]]), np.array([0.96]))
+    assert "x:c" not in Z.columns
+    assert Z.loc[0, "x:a"] == "-" and Z.loc[0, "x:b"] == "-"  # top-1 is b (negative): no reason
+    Z = rep.transform(np.array([[5, 5, 5]]), np.array([[0.9, 0.1, 0.0]]), np.array([0.96]))
+    assert Z.loc[0, "x:a"] == "Q2" and Z.loc[0, "x:b"] == "-"
+    assert Representation.from_dict(rep.to_dict()).gate_disc
+
+
+def test_label_filter_removes_random_flips():
+    from xtriage.engine.rules import filter_noisy_labels
+
+    rng = np.random.default_rng(0)
+    Z = pd.DataFrame({"x:f": rng.choice(["Q1", "Q2", "Q3"], 3000), "band": rng.choice(["low", "high"], 3000)})
+    clean = np.where(Z["x:f"] == "Q3", "P1", "P3").astype(object)
+    noisy = noisy_oracle(clean, 0.1, 0)
+    keep = filter_noisy_labels(Z, noisy, seed=0)
+    flipped = noisy != clean
+    assert keep[flipped].mean() < 0.2 and keep[~flipped].mean() > 0.95
 
 
 def test_queue_order_tier_then_score():

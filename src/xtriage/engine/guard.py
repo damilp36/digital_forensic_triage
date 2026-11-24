@@ -13,6 +13,13 @@ What a contested case does to the queue is set by ``mode``:
   * ``review`` -- every contested case is placed in tier P2, as in the original formulation.
     Kept as an ablation: it demotes true P1 events whenever an escalation rule fires on a
     low-band score.
+  * ``calibrated`` -- replaces the fixed triggers (i)/(ii) by an estimated risk. For every
+    (rule, score band) cell the tune window gives the share of oracle-P1 events among the alerts
+    the cell decided; smoothed towards the overall P1 share,
+        leak = (n_P1 + a * prior) / (n + a).
+    A non-escalation decision is contested (raised to P2) when leak >= ``tau``; escalation rules on
+    low-band scores are flagged as before but keep P1. The table is learned in
+    :func:`guard_stats` and stored with the rule set, so replay reproduces it.
 """
 
 from __future__ import annotations
@@ -22,13 +29,47 @@ import numpy as np
 TIER_RANK = {"P1": 0, "P2": 1, "P3": 2}
 
 
+def _cell(rule_id, band) -> str:
+    return f"{rule_id}|{band}"
+
+
+def guard_stats(rule_id: np.ndarray, band: np.ndarray, y: np.ndarray) -> dict:
+    """Per (rule, band) cell: [alerts, oracle-P1 alerts] on the tune window, plus the P1 prior."""
+    y = np.asarray(y, dtype=object)
+    cells: dict[str, list[int]] = {}
+    for r, b, t in zip(rule_id, band, y):
+        c = cells.setdefault(_cell(r, b), [0, 0])
+        c[0] += 1
+        c[1] += int(t == "P1")
+    return {"cells": cells, "prior": float(np.mean(y == "P1")) if len(y) else 0.0}
+
+
+def leak_risk(rule_id: np.ndarray, band: np.ndarray, gcfg: dict) -> np.ndarray:
+    st = gcfg.get("stats") or {"cells": {}, "prior": 0.0}
+    a, prior = float(gcfg.get("smoothing", 20.0)), float(st["prior"])
+    out = np.empty(len(rule_id))
+    for i, (r, b) in enumerate(zip(rule_id, band)):
+        n, p1 = st["cells"].get(_cell(r, b), (0, 0))
+        out[i] = (p1 + a * prior) / (n + a) if n + a > 0 else prior  # unseen cell -> prior
+    return out
+
+
 def apply_guard(rule_priority: np.ndarray, is_default: np.ndarray, q: np.ndarray, band: np.ndarray,
-                gcfg: dict):
+                gcfg: dict, rule_id: np.ndarray | None = None):
     rule_priority = np.asarray(rule_priority, dtype=object)
     n = len(rule_priority)
     reason = np.full(n, "", dtype=object)
     if not gcfg.get("enabled", True):
         return rule_priority.copy(), np.zeros(n, dtype=bool), reason
+    if gcfg.get("mode") == "calibrated":
+        assert rule_id is not None, "calibrated guard needs the fired rule ids"
+        leak = leak_risk(rule_id, band, gcfg)
+        risky = (rule_priority != "P1") & (leak >= float(gcfg.get("tau", 0.01)))
+        p1_conflict = (rule_priority == "P1") & (np.asarray(band) == "low")
+        reason[risky] = "p1-leak-risk"
+        reason[p1_conflict] = "escalate-rule-on-low-score"
+        tier = np.where(risky, "P2", rule_priority).astype(object)
+        return tier, risky | p1_conflict, reason
     default_hit = np.asarray(is_default, dtype=bool)
     p3_conflict = (rule_priority == "P3") & (np.asarray(q) >= gcfg.get("p3_max_q", 0.99))
     p1_conflict = (rule_priority == "P1") & (np.asarray(band) == "low")

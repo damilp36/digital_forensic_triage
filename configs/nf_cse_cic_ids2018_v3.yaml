@@ -3,7 +3,7 @@
 #   xtriage cross --train configs/nf_unsw_nb15_v3.yaml --test configs/nf_cse_cic_ids2018_v3.yaml
 name: nf_cse_cic_ids2018_v3
 seed: 0
-seeds: [0, 1, 2, 3, 4]
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 dataset:
   loader: netflow_v3
   base_dir: data/raw
@@ -14,6 +14,9 @@ dataset:
   time_format: ms
   id_cols: [IPV4_SRC_ADDR, IPV4_DST_ADDR, L4_SRC_PORT, FLOW_END_MILLISECONDS]
   benign_labels: [Benign]
+  # 20.1M rows: keep a deterministic 10% of benign rows at load time (all attacks kept).
+  benign_keep: 0.1
+  chunk_rows: 1000000
 
 priority_map:
   P1: [Infilteration, Infiltration, Bot, SQL_Injection]
@@ -26,13 +29,14 @@ split:
   fit_until: 0.25
   block_minutes: 30
 
-# ~20M flows: subsample benign traffic heavily (paper: "subsampled by time window").
+# ~20M flows: 10% of benign kept at load (benign_keep), then 10% of that per tune/test window
+# (= 1% of all benign traffic, as before).
 sample:
   fit_benign: 100000
   calibration: 50000
   background_pool: 20000
-  tune: {benign_fraction: 0.01, attack_cap_per_class: 15000}
-  test: {benign_fraction: 0.01, attack_cap_per_class: 15000}
+  tune: {benign_fraction: 0.1, attack_cap_per_class: 15000}
+  test: {benign_fraction: 0.1, attack_cap_per_class: 15000}
 
 detector: {type: iforest, n_estimators: 100, max_samples: 256}
 alert: {theta: 0.95}

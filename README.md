@@ -99,7 +99,22 @@ nothing else changes.
   is reported separately (`det_p1_alerted`). Recall@b is measured against all P1 events in the test
   window.
 * **Statistics.** With 5 seeds a Wilcoxon signed-rank test cannot reach p < 0.05 two-sided (minimum
-  0.0625). The harness reports both two-sided and one-sided p-values. Use more seeds, or pool
-  seeds × datasets, to make significance claims.
+  0.0625), so the real-data configs use 10 seeds. The harness reports both two-sided and one-sided
+  p-values.
+* **Large corpora.** CSVs are read in chunks. `dataset.benign_keep` keeps a deterministic fraction
+  of benign rows at load time (a hash of the file row number, so it does not depend on chunking); all
+  attack rows are kept. NF-CICIDS2018-v3 uses 0.1 (20.1M rows → 4.35M).
+* **Follow-up variants (limitation findings W2–W5 in `docs/notes.txt`).**
+  `Fix-calibrated-guard`: guard mode `calibrated` contests a non-escalation decision only when its
+  (rule, score band) cell let P1 events through on the tune window (smoothed share ≥ `guard.tau`);
+  the table is stored with the rule set, so replay reproduces it.
+  `Fix-SHAP-gated-bins` (`represent.gate_disc`): a traffic-value bin is visible to the rule learner
+  only when that feature is a positive top-k SHAP reason, otherwise `-`.
+  `Fix-no-port-bins` (`represent.exclude`): port features are left out of the bins.
+  `Fix-label-filter` (`rules.label_filter`): an out-of-fold random forest removes oracle labels with
+  probability < 0.2 before RIPPER learns (classification filter, Brodley & Friedl 1999).
+  New probes: `probe_guard` (τ sweep, `fig_guard`), `probe_theta` (alert threshold),
+  `probe_forest_size` (forest size vs. explanation stability across seeds); `probe_noise` and
+  `probe_evasion` now compare plain and fixed variants.
 * **Evasion probe** perturbs features only (padding, timing, port choice within protocol limits).
   Derived features are adjusted to first order; no traffic is generated.

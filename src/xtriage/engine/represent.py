@@ -6,6 +6,12 @@ z(x) = [ disc(x), pi_1(x), ..., pi_d(x), band(q(s)) ]
 * pi_j   -- 'T' when feature j is in the top-k attributions AND pushed the score up (phi_j > 0);
 * band   -- score percentile mapped to low / medium / high.
 
+Options (limitation follow-ups W2/W4):
+* ``exclude``   -- features left out of disc(x) (e.g. ports: values the detector ignores but rules
+  latch onto, which makes rules brittle to attacker-chosen values);
+* ``gate_disc`` -- SHAP-gated bins: x:f carries its bin only when f is a positive top-k reason for the
+  alert, otherwise the symbol '-'. Rules can then only use traffic values the detector relied on.
+
 All columns are categorical strings so the rule learners treat them as symbols.
 """
 
@@ -26,8 +32,10 @@ def band_of(q: np.ndarray, edges: list[float]) -> np.ndarray:
 
 class Representation:
     def __init__(self, feature_names: list[str], n_bins: int = 5, bands=(0.99, 0.999), top_k: int = 5,
-                 parts=("disc", "why", "band")):
+                 parts=("disc", "why", "band"), exclude=(), gate_disc: bool = False):
         self.feature_names = list(feature_names)
+        self.exclude = [f for f in (exclude or []) if f in self.feature_names]
+        self.gate_disc = bool(gate_disc)
         self.n_bins = n_bins
         self.bands = list(bands)
         self.k = top_k
@@ -65,13 +73,19 @@ class Representation:
                   parts: tuple[str, ...] | None = None) -> pd.DataFrame:
         parts = parts or self.parts
         cols = {}
+        W = None
         if "disc" in parts:
             D = self.disc(X)
+            if self.gate_disc:
+                assert phi is not None, "SHAP-gated bins need attributions"
+                W = self.why(phi)
+                D = np.where(W == "T", D, "-")
             for j, f in enumerate(self.feature_names):
-                cols[f"x:{f}"] = D[:, j]
+                if f not in self.exclude:
+                    cols[f"x:{f}"] = D[:, j]
         if "why" in parts:
             assert phi is not None, "SHAP predicates need attributions"
-            W = self.why(phi)
+            W = self.why(phi) if W is None else W
             for j, f in enumerate(self.feature_names):
                 cols[f"why:{f}"] = W[:, j]
         if "band" in parts:
@@ -89,6 +103,8 @@ class Representation:
             return f"SHAP[{f}] in top-{self.k}, positive" if yes else f"NOT SHAP[{f}] in top-{self.k}, positive"
         if col.startswith("x:"):
             f = col[2:]
+            if val == "-":
+                return f"{f} {'not' if op == '==' else 'is'} a top-{self.k} reason"
             j = self.feature_names.index(f)
             e = self.edges[j]
             b = int(val[1:]) - 1
@@ -100,10 +116,12 @@ class Representation:
 
     def to_dict(self) -> dict:
         return {"feature_names": self.feature_names, "n_bins": self.n_bins, "bands": self.bands,
-                "k": self.k, "parts": list(self.parts), "edges": [e.tolist() for e in self.edges]}
+                "k": self.k, "parts": list(self.parts), "edges": [e.tolist() for e in self.edges],
+                "exclude": self.exclude, "gate_disc": self.gate_disc}
 
     @classmethod
     def from_dict(cls, d: dict) -> "Representation":
-        r = cls(d["feature_names"], d["n_bins"], d["bands"], d["k"], d["parts"])
+        r = cls(d["feature_names"], d["n_bins"], d["bands"], d["k"], d["parts"], d.get("exclude", ()),
+                d.get("gate_disc", False))
         r.edges = [np.asarray(e) for e in d["edges"]]
         return r

@@ -15,7 +15,8 @@ from ..data.loaders import describe, load_dataset
 from ..data.prepare import Prepared, prepare
 from .accountability import run_accountability
 from .experiments import run_detectors, run_main, summarise, wilcoxon_table
-from .probes import probe_background, probe_evasion, probe_noise, probe_shift_time, probe_shortcut
+from .probes import (probe_background, probe_evasion, probe_forest_size, probe_guard, probe_noise,
+                     probe_shift_time, probe_shortcut, probe_theta)
 from .stability import attribution_grid, faithfulness, stability_sample, stability_tables
 
 log = logging.getLogger(__name__)
@@ -47,7 +48,8 @@ def _write(df: pd.DataFrame, path: Path) -> None:
         df.to_csv(path, index=False)
 
 
-def _figures(res: Path, curves: dict, stab: pd.DataFrame | None, noise: pd.DataFrame | None) -> None:
+def _figures(res: Path, curves: dict, stab: pd.DataFrame | None, noise: pd.DataFrame | None,
+             guard: pd.DataFrame | None = None) -> None:
     import matplotlib
 
     matplotlib.use("Agg")
@@ -86,15 +88,43 @@ def _figures(res: Path, curves: dict, stab: pd.DataFrame | None, noise: pd.DataF
         plt.close(fig)
     if noise is not None and len(noise):
         fig, ax = plt.subplots(figsize=(5, 3.2))
-        g = noise.groupby("eta")[["macro_f1", "fidelity", "coverage"]].agg(["mean", "std"])
-        for m in ("macro_f1", "fidelity", "coverage"):
-            ax.errorbar(g.index, g[(m, "mean")], yerr=g[(m, "std")], marker="o", capsize=3, label=m)
+        if "method" not in noise.columns:
+            noise = noise.assign(method="XTriage")
+        for method, ls in (("XTriage", "-"), ("Fix-label-filter", "--")):
+            part = noise[noise["method"] == method]
+            if not len(part):
+                continue
+            g = part.groupby("eta")[["p1_f1", "macro_f1"]].agg(["mean", "std"])
+            tag = "plain" if method == "XTriage" else "label filter"
+            for m in ("p1_f1", "macro_f1"):
+                ax.errorbar(g.index, g[(m, "mean")], yerr=g[(m, "std")], marker="o", capsize=3, ls=ls,
+                            label=f"{m} ({tag})")
         ax.set_xlabel(r"oracle noise $\eta$")
         ax.set_ylim(0, 1.02)
         ax.legend(fontsize=7, frameon=False)
         fig.tight_layout()
         fig.savefig(res / "fig_noise.pdf")
         fig.savefig(res / "fig_noise.png", dpi=160)
+        plt.close(fig)
+    if guard is not None and len(guard):
+        fig, ax = plt.subplots(figsize=(5, 3.2))
+        cal = guard[guard["variant"] == "calibrated"].sort_values("contested_rate")
+        ax.plot(cal["contested_rate"], cal["severe_caught"], marker="o", label="calibrated guard (tau sweep)")
+        for _, r in cal.iterrows():
+            ax.annotate(f"{r['tau']:g}", (r["contested_rate"], r["severe_caught"]), fontsize=6,
+                        textcoords="offset points", xytext=(3, 3))
+        fixed = guard[guard["variant"] == "XTriage"]
+        if len(fixed):
+            ax.scatter(fixed["contested_rate"], fixed["severe_caught"], marker="s", color="k",
+                       label="fixed-trigger guard", zorder=3)
+        ax.set_xlabel("contested rate (share of alerts sent to review)")
+        ax.set_ylabel("severe errors caught")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1.02)
+        ax.legend(fontsize=7, frameon=False)
+        fig.tight_layout()
+        fig.savefig(res / "fig_guard.pdf")
+        fig.savefig(res / "fig_guard.png", dpi=160)
         plt.close(fig)
 
 
@@ -144,20 +174,24 @@ def evaluate(cfg: dict, parts=ALL_PARTS, refresh: bool = False, config_path: str
         _write(probe_shortcut(prep, cfg, cache0, seeds[0]), res / "probe_shortcut.csv")
         _write(probe_shift_time(prep, cfg, cache0), res / "probe_shift.csv")
         _write(probe_evasion(prep, cfg, cache0), res / "probe_evasion.csv")
+        _write(probe_guard(prep, cfg, cache0), res / "probe_guard.csv")
+        _write(probe_forest_size(prep, cfg, idx), res / "probe_forest_size.csv")
         main = pd.DataFrame(rows)
         guard_cols = ["seed", "method", "rule_error_rate", "contested_rate", "guard_catch_rate", "guard_precision",
                       "severe_errors", "severe_caught"]
         _write(main[main["method"].isin(["XTriage", "Abl-no-guard", "B4-tree-surrogate"])][
             [c for c in guard_cols if c in main.columns]], res / "probe_rule_infidelity.csv")
-        frames = []
+        frames, theta_frames = [], []
         for sd in cfg["eval"].get("probe_seeds", seeds[:3]):
             if sd == seeds[0]:
                 c = cache0
             else:
                 _, c = run_main_light(prep, cfg, sd)
             frames.append(probe_noise(prep, cfg, c, sd))
+            theta_frames.append(probe_theta(prep, cfg, c, sd))
         noise = pd.concat(frames, ignore_index=True)
         _write(noise, res / "probe_noise.csv")
+        _write(pd.concat(theta_frames, ignore_index=True), res / "probe_theta.csv")
 
     # -------------------------------------------------------------- detectors
     if "detectors" in parts:
@@ -179,7 +213,7 @@ def evaluate(cfg: dict, parts=ALL_PARTS, refresh: bool = False, config_path: str
 
         export_bench(prep, cfg, cache0, out, config_path)
 
-    _figures(res, curves, stab, noise)
+    _figures(res, curves, stab, noise, _read(res / "probe_guard.csv"))
     write_report(out, cfg)
     log.info("evaluation finished in %.1f min -> %s", (time.perf_counter() - t_start) / 60, res)
     return res
@@ -240,7 +274,7 @@ def write_report(out: Path, cfg: dict) -> Path:
                           "contested_rate", "severe_caught"]))
     st = _read(res / "stats_wilcoxon.csv")
     parts.append("\n### Paired Wilcoxon signed-rank tests, XTriage vs. each method (over seeds)\n\n"
-                 "With n = 5 seeds the smallest attainable p-value is 0.0625 two-sided and 0.03125 one-sided.\n\n")
+                 f"n = {len(cfg['seeds'])} seeds; with 5 the smallest attainable p-value is 0.0625 two-sided.\n\n")
     parts.append(_md(st))
     parts.append("\n## RQ2 explanation reliability\n\n")
     parts.append(_md(_read(res / "stability_summary.csv")))
@@ -256,9 +290,19 @@ def write_report(out: Path, cfg: dict) -> Path:
     parts.append(_md(_read(res / "probe_evasion.csv")))
     parts.append("\n### Rule infidelity and the guard\n\n")
     parts.append(_md(_read(res / "probe_rule_infidelity.csv")))
+    parts.append("\n### Guard trade-off (calibrated guard, tau sweep; seed 0)\n\n")
+    parts.append(_md(_read(res / "probe_guard.csv")))
+    th = _read(res / "probe_theta.csv")
+    if th is not None:
+        th = th.groupby("theta").mean(numeric_only=True).reset_index().drop(columns=["seed"], errors="ignore")
+    parts.append("\n### Alert threshold (mean over probe seeds)\n\n")
+    parts.append(_md(th))
+    parts.append("\n### Isolation-forest size vs. explanation stability across retraining seeds\n\n")
+    parts.append(_md(_read(res / "probe_forest_size.csv")))
     nz = _read(res / "probe_noise.csv")
     if nz is not None:
-        nz = nz.groupby("eta").mean(numeric_only=True).reset_index().drop(columns=["seed"], errors="ignore")
+        keys = ["method", "eta"] if "method" in nz.columns else ["eta"]
+        nz = nz.groupby(keys).mean(numeric_only=True).reset_index().drop(columns=["seed"], errors="ignore")
     parts.append("\n### Oracle noise (mean over probe seeds)\n\n")
     parts.append(_md(nz))
     parts.append("\n## Detector robustness\n\n")

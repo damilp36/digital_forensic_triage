@@ -18,15 +18,35 @@ log = logging.getLogger(__name__)
 
 FULL = ("disc", "why", "band")
 VARIANTS = {
-    # name: (parts, learner, guard)
-    "XTriage": (FULL, "ripper", True),
-    "B3-raw-rules": (("disc",), "ripper", False),
-    "B4-tree-surrogate": (FULL, "tree", True),
-    "Abl-no-SHAP-predicates": (("disc", "band"), "ripper", True),
-    "Abl-no-score-band": (("disc", "why"), "ripper", True),
-    "Abl-no-guard": (FULL, "ripper", False),
-    "Abl-guard-review-tier": (FULL, "ripper", "review"),
+    # name: (parts, learner, guard, overrides)
+    "XTriage": (FULL, "ripper", True, None),
+    "B3-raw-rules": (("disc",), "ripper", False, None),
+    "B4-tree-surrogate": (FULL, "tree", True, None),
+    "Abl-no-SHAP-predicates": (("disc", "band"), "ripper", True, None),
+    "Abl-no-score-band": (("disc", "why"), "ripper", True, None),
+    "Abl-no-guard": (FULL, "ripper", False, None),
+    "Abl-guard-review-tier": (FULL, "ripper", "review", None),
+    # follow-ups to the CIC-IDS2017 limitation findings (docs/notes.txt W2-W5)
+    "Fix-calibrated-guard": (FULL, "ripper", "calibrated", None),
+    "Fix-SHAP-gated-bins": (FULL, "ripper", True, {"represent": {"gate_disc": True}}),
+    "Fix-no-port-bins": (FULL, "ripper", True, {"represent": {"exclude": "$port_features"}}),
+    "Fix-label-filter": (FULL, "ripper", True, {"rules": {"label_filter": True}}),
 }
+
+
+def resolve_overrides(overrides, cfg: dict):
+    """Substitute config references such as "$port_features" (cfg['evasion']['port_features'])."""
+    if not overrides:
+        return overrides
+    out = {}
+    for k, v in overrides.items():
+        if isinstance(v, dict):
+            out[k] = resolve_overrides(v, cfg)
+        elif v == "$port_features":
+            out[k] = list(cfg["evasion"].get("port_features", []))
+        else:
+            out[k] = v
+    return out
 
 
 def evaluate_engine(eng: XTriageEngine, X: np.ndarray, sc: Scored, truth: np.ndarray, total_p1: int,
@@ -114,10 +134,11 @@ def run_main(prep: Prepared, cfg: dict, seed: int, curves: dict | None = None) -
         curves["B1-score-only"] = workload_curve(order, truth[test_sc.alert_idx])
 
     engines = {}
-    for name, (parts, learner, guard) in VARIANTS.items():
+    for name, (parts, learner, guard, overrides) in VARIANTS.items():
         t1 = time.perf_counter()
         eng = XTriageEngine.fit(prep, cfg, seed, detector=det, explainer=ex, tune_scored=tune_sc,
-                                parts=parts, learner=learner, guard=guard)
+                                parts=parts, learner=learner, guard=guard,
+                                overrides=resolve_overrides(overrides, cfg))
         fit_s = time.perf_counter() - t1
         m, order = evaluate_engine(eng, Xte, test_sc, truth, total_p1, budgets)
         rows.append({**base, "method": name, "rule_fit_seconds": fit_s, **m})
