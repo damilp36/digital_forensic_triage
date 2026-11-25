@@ -1,0 +1,99 @@
+{
+  "windows": {
+    "fit": 946169,
+    "tune": 709627,
+    "test": 709628
+  },
+  "fit_benign": 100000,
+  "calibration": 50000,
+  "background_pool": 20000,
+  "tune_rows": 146218,
+  "test_rows": 152024,
+  "tune_classes": {
+    "Benign": 99285,
+    "Exploits": 15000,
+    "Fuzzers": 11553,
+    "Generic": 6838,
+    "Reconnaissance": 6149,
+    "Backdoor": 3210,
+    "DoS": 2614,
+    "Shellcode": 1127,
+    "Analysis": 379,
+    "Worms": 63
+  },
+  "test_classes": {
+    "Benign": 97069,
+    "Exploits": 15000,
+    "Fuzzers": 15000,
+    "Generic": 10408,
+    "Reconnaissance": 8770,
+    "DoS": 2742,
+    "Backdoor": 1406,
+    "Shellcode": 974,
+    "Analysis": 580,
+    "Worms": 75
+  },
+  "tune_priorities": {
+    "P3": 99285,
+    "P2": 27533,
+    "P1": 19400
+  },
+  "test_priorities": {
+    "P3": 97069,
+    "P2": 37500,
+    "P1": 17455
+  },
+  "background_hashes": [
+    "f035ceb196144f5db38b47e3395dedfd92f4bcbbd13e7592b2d70ec4569bab7b",
+    "2f5c89b6f5d5a52673ce0d26b2cec534c35ca43deb02ce2c2a3b5e32170e3be6",
+    "4dcbb9f08e5c8fa3bed20d16089a15d2e0ce0778fdf4fe6c0d4a9a39daa03952",
+    "96917355fd738ebb6cad40c52f3a6f768bcd3c512a8fbea666d6de7bd9fe2da7",
+    "2c3b9101d1986a570ede9268d2641a201f6fecf6b34b9c1ae38456c56830554a"
+  ],
+  "split": {
+    "strategy": "time",
+    "fractions": [
+      0.4,
+      0.3,
+      0.3
+    ],
+    "fit_until": null,
+    "block_minutes": 20
+  },
+  "sample": {
+    "fit_benign": 100000,
+    "calibration": 50000,
+    "background_pool": 20000,
+    "tune": {
+      "benign_fraction": 0.15,
+      "attack_cap_per_class": 15000,
+      "max_rows": null
+    },
+    "test": {
+      "benign_fraction": 0.15,
+      "attack_cap_per_class": 15000,
+      "max_rows": null
+    }
+  },
+  "dataset": {
+    "rows": 2365424,
+    "features": 48,
+    "attack_rate": 0.053983133679205084,
+    "classes": {
+      "Benign": 2237731,
+      "Exploits": 42748,
+      "Fuzzers": 33816,
+      "Generic": 19651,
+      "Reconnaissance": 17074,
+      "DoS": 5980,
+      "Backdoor": 4659,
+      "Shellcode": 2381,
+      "Analysis": 1226,
+      "Worms": 158
+    },
+    "time_span": [
+      "2015-01-22T11:49:36.907000",
+      "2015-02-18T12:29:24.927000"
+    ]
+  }
+}

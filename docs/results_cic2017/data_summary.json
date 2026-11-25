@@ -1,0 +1,112 @@
+{
+  "windows": {
+    "fit": 529918,
+    "tune": 1346044,
+    "test": 954781
+  },
+  "fit_benign": 100000,
+  "calibration": 50000,
+  "background_pool": 20000,
+  "tune_rows": 145064,
+  "test_rows": 149837,
+  "tune_classes": {
+    "Benign": 85865,
+    "DoS Hulk": 15000,
+    "DDoS": 15000,
+    "PortScan": 15000,
+    "FTP-Patator": 5245,
+    "SSH-Patator": 2949,
+    "DoS slowloris": 2590,
+    "DoS Slowhttptest": 1502,
+    "Bot": 1030,
+    "Web Attack - Brute Force": 711,
+    "Web Attack - XSS": 131,
+    "Web Attack - Sql Injection": 21,
+    "Infiltration": 13,
+    "Heartbleed": 7
+  },
+  "test_classes": {
+    "Benign": 88453,
+    "DDoS": 15000,
+    "PortScan": 11225,
+    "DoS GoldenEye": 10293,
+    "DoS Hulk": 9742,
+    "DoS Slowhttptest": 3997,
+    "DoS slowloris": 3206,
+    "SSH-Patator": 2948,
+    "FTP-Patator": 2693,
+    "Bot": 936,
+    "Web Attack - Brute Force": 796,
+    "Web Attack - XSS": 521,
+    "Infiltration": 23,
+    "Heartbleed": 4
+  },
+  "tune_priorities": {
+    "P3": 85865,
+    "P2": 58128,
+    "P1": 1071
+  },
+  "test_priorities": {
+    "P3": 88453,
+    "P2": 60421,
+    "P1": 963
+  },
+  "background_hashes": [
+    "857ce199fe1028104eda3d1b3cddc2a96b8fa17c8e0c8dc0c086ee69c13705fd",
+    "d2a286b26f3251eb4291146d93b9d49087a22306bfe01d84155f0a50885a2d0a",
+    "27221f151ac7af002a91859371b9a9ad2a82d0d2a7b1dc32d8f66fad511a5d60",
+    "6df073d6464ad6a201867e2e6ec9fd8ba060d47fb9d4289aa5cfb67f974123b9",
+    "88ba2b7e1c306d3150c3f4eda7cf002bdd6352b139b88a5b07c27a157a8a0b32"
+  ],
+  "split": {
+    "strategy": "blocked",
+    "fractions": [
+      0.4,
+      0.3,
+      0.3
+    ],
+    "fit_until": "2017-07-04 00:00:00",
+    "block_minutes": 20
+  },
+  "sample": {
+    "fit_benign": 100000,
+    "calibration": 50000,
+    "background_pool": 20000,
+    "tune": {
+      "benign_fraction": 0.1,
+      "attack_cap_per_class": 15000,
+      "max_rows": null
+    },
+    "test": {
+      "benign_fraction": 0.1,
+      "attack_cap_per_class": 15000,
+      "max_rows": null
+    }
+  },
+  "dataset": {
+    "rows": 2830743,
+    "features": 78,
+    "attack_rate": 0.19699633629757277,
+    "classes": {
+      "Benign": 2273097,
+      "DoS Hulk": 231073,
+      "PortScan": 158930,
+      "DDoS": 128027,
+      "DoS GoldenEye": 10293,
+      "FTP-Patator": 7938,
+      "SSH-Patator": 5897,
+      "DoS slowloris": 5796,
+      "DoS Slowhttptest": 5499,
+      "Bot": 1966,
+      "Web Attack - Brute Force": 1507,
+      "Web Attack - XSS": 652,
+      "Infiltration": 36,
+      "Web Attack - Sql Injection": 21,
+      "Heartbleed": 11
+    },
+    "time_span": [
+      "2017-07-03T08:55:58",
+      "2017-07-07T17:02:00"
+    ]
+  }
+}

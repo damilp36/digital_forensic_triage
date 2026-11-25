@@ -9,72 +9,100 @@
 
 | method | det_auroc | alerts | recall@1000 | workload@90_frac | ndcg | macro_f1 | p1_f1 | coverage | fidelity | fidelity_traffic_conds | n_rules | mean_rule_len | contested_rate | severe_caught |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| B1-score-only | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.01703 ± 0.0092 | 0.4528 ± 0.14 | 0.9232 ± 0.013 |  |  |  |  |  |  |  |  |  |
-| XTriage | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.03863 ± 0.0047 | 0.2046 ± 0.33 | 0.9546 ± 0.0086 | 0.8158 ± 0.018 | 0.7363 ± 0.12 | 0.3644 ± 0.1 | 0.05649 ± 0.087 | 0.01263 ± 0.0079 | 13 ± 1.6 | 2.386 ± 0.046 | 0.7093 ± 0.084 | 0.7277 ± 0.1 |
-| B3-raw-rules | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.0324 ± 0.0076 | 0.5717 ± 0.33 | 0.9932 ± 0.0032 | 0.8814 ± 0.023 | 0.7454 ± 0.11 | 0.3588 ± 0.099 | 0.06397 ± 0.036 | 0.06397 ± 0.036 | 14.8 ± 2.7 | 2.675 ± 0.19 | 0 ± 0 | 0 ± 0 |
-| B4-tree-surrogate | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.0297 ± 0.0028 | 0.7936 ± 0.057 | 0.9506 ± 0.011 | 0.7475 ± 0.031 | 0.4693 ± 0.069 | 1 ± 0 | 0.021 ± 0.013 | 0.003397 ± 0.004 | 12 ± 0.71 | 3.698 ± 0.058 | 0.07416 ± 0.018 | 0.6727 ± 0.13 |
-| Abl-no-SHAP-predicates | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.03946 ± 0.0042 | 0.2055 ± 0.34 | 0.9545 ± 0.0097 | 0.8269 ± 0.02 | 0.7525 ± 0.095 | 0.3561 ± 0.097 | 0.06263 ± 0.035 | 0.06263 ± 0.035 | 15.2 ± 2.3 | 2.605 ± 0.18 | 0.7173 ± 0.08 | 0.7115 ± 0.15 |
-| Abl-no-score-band | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.03884 ± 0.0049 | 0.2045 ± 0.33 | 0.9548 ± 0.0085 | 0.815 ± 0.017 | 0.734 ± 0.11 | 0.3644 ± 0.1 | 0.0566 ± 0.087 | 0.01263 ± 0.0079 | 13.2 ± 1.8 | 2.381 ± 0.051 | 0.7093 ± 0.084 | 0.7406 ± 0.12 |
-| Abl-no-guard | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.03115 ± 0.0086 | 0.5707 ± 0.33 | 0.9931 ± 0.0026 | 0.8744 ± 0.023 | 0.7363 ± 0.12 | 0.3644 ± 0.1 | 0.05649 ± 0.087 | 0.01263 ± 0.0079 | 13 ± 1.6 | 2.386 ± 0.046 | 0 ± 0 | 0 ± 0 |
-| Abl-guard-review-tier | 0.7149 ± 0.0082 | 1.642e+04 ± 4.3e+03 | 0.0243 ± 0.011 | 0.4635 ± 0.22 | 0.9491 ± 0.01 | 0.7374 ± 0.081 | 0.5018 ± 0.29 | 0.3644 ± 0.1 | 0.05649 ± 0.087 | 0.01263 ± 0.0079 | 13 ± 1.6 | 2.386 ± 0.046 | 0.7093 ± 0.084 | 0.7277 ± 0.1 |
-| B2-xgboost-shap | 0.9999 ± 5.9e-06 | 6.579e+04 ± 85 | 0 ± 0 | 0.8769 ± 0.00074 | 0.9753 ± 6.9e-05 |  |  |  |  |  |  |  |  |  |
-| XTriage@sample | 0.7149 ± 0.0082 | 1500 ± 0 | 0.9722 ± 0.038 | 0.1876 ± 0.26 | 0.9228 ± 0.029 | 0.7648 ± 0.17 | 0.81 ± 0.081 | 0.5099 ± 0.088 | 0.04864 ± 0.044 | 0.01205 ± 0.009 | 7 ± 1.9 | 1.88 ± 0.3 | 0.5928 ± 0.035 | 0.6021 ± 0.45 |
-| B5-LIME@sample | 0.7149 ± 0.0082 | 1500 ± 0 | 0.9675 ± 0.021 | 0.09333 ± 0.042 | 0.9252 ± 0.03 | 0.7884 ± 0.18 | 0.8412 ± 0.07 | 0.4915 ± 0.071 | 0.03167 ± 0.048 | 0.03167 ± 0.048 | 7.2 ± 1.3 | 1.983 ± 0.23 | 0.6093 ± 0.017 | 0.7556 ± 0.2 |
-| B1-score-only@sample | 0.7149 ± 0.0082 | 1500 ± 0 | 0.977 ± 0.016 | 0.4721 ± 0.12 | 0.8125 ± 0.02 |  |  |  |  |  |  |  |  |  |
-| Anchors@sample | 0.7149 ± 0.0082 | 2000 ± 0 | 0.5981 ± 0.22 | 0.6932 ± 0.075 | 0.8343 ± 0.014 | 0.5338 ± 0.022 | 0 ± 0 | 1 ± 0 | 0.3726 ± 0.13 | 0.1306 ± 0.14 | 37.2 ± 4.3 | 1.029 ± 0.066 | 0.129 ± 0.015 | 0.5608 ± 0.23 |
-| XTriage@anchor-sample | 0.7149 ± 0.0082 | 2000 ± 0 | 0.9307 ± 0.064 | 0.1903 ± 0.26 | 0.9191 ± 0.025 | 0.7708 ± 0.18 | 0.822 ± 0.1 | 0.5061 ± 0.087 | 0.04768 ± 0.062 | 0.01276 ± 0.015 | 8.8 ± 1.5 | 2.195 ± 0.21 | 0.5927 ± 0.04 | 0.5321 ± 0.42 |
+| B1-score-only | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.01734 ± 0.0065 | 0.4956 ± 0.15 | 0.9201 ± 0.011 |  |  |  |  |  |  |  |  |  |
+| XTriage | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03925 ± 0.0038 | 0.2053 ± 0.31 | 0.9507 ± 0.0084 | 0.8104 ± 0.021 | 0.7491 ± 0.094 | 0.4023 ± 0.095 | 0.03834 ± 0.063 | 0.009022 ± 0.0075 | 13.2 ± 1.2 | 2.381 ± 0.072 | 0.677 ± 0.081 | 0.7497 ± 0.087 |
+| B3-raw-rules | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03323 ± 0.006 | 0.5402 ± 0.3 | 0.9933 ± 0.0025 | 0.889 ± 0.019 | 0.7888 ± 0.092 | 0.3947 ± 0.089 | 0.05115 ± 0.035 | 0.05115 ± 0.035 | 14.8 ± 2.4 | 2.593 ± 0.19 | 0 ± 0 | 0 ± 0 |
+| B4-tree-surrogate | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03074 ± 0.0042 | 0.7789 ± 0.049 | 0.947 ± 0.0099 | 0.7497 ± 0.027 | 0.4692 ± 0.063 | 1 ± 0 | 0.02258 ± 0.022 | 0.005186 ± 0.0065 | 12.1 ± 0.57 | 3.701 ± 0.052 | 0.0796 ± 0.015 | 0.6903 ± 0.1 |
+| Abl-no-SHAP-predicates | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03956 ± 0.0035 | 0.2009 ± 0.31 | 0.9517 ± 0.0083 | 0.8344 ± 0.019 | 0.7899 ± 0.085 | 0.3866 ± 0.083 | 0.05074 ± 0.034 | 0.05074 ± 0.034 | 15.1 ± 2 | 2.548 ± 0.14 | 0.6922 ± 0.069 | 0.6781 ± 0.29 |
+| Abl-no-score-band | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03977 ± 0.0042 | 0.205 ± 0.31 | 0.951 ± 0.0082 | 0.8123 ± 0.022 | 0.7546 ± 0.095 | 0.4023 ± 0.095 | 0.03839 ± 0.063 | 0.009022 ± 0.0075 | 13.1 ± 1.4 | 2.357 ± 0.13 | 0.677 ± 0.081 | 0.7919 ± 0.12 |
+| Abl-no-guard | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03229 ± 0.0073 | 0.5366 ± 0.3 | 0.9914 ± 0.004 | 0.8706 ± 0.022 | 0.7491 ± 0.094 | 0.4023 ± 0.095 | 0.03834 ± 0.063 | 0.009022 ± 0.0075 | 13.2 ± 1.2 | 2.381 ± 0.072 | 0 ± 0 | 0 ± 0 |
+| Abl-guard-review-tier | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.02482 ± 0.0085 | 0.4979 ± 0.18 | 0.9448 ± 0.0092 | 0.7361 ± 0.067 | 0.5269 ± 0.23 | 0.4023 ± 0.095 | 0.03834 ± 0.063 | 0.009022 ± 0.0075 | 13.2 ± 1.2 | 2.381 ± 0.072 | 0.677 ± 0.081 | 0.7497 ± 0.087 |
+| Fix-calibrated-guard | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03229 ± 0.0073 | 0.5366 ± 0.3 | 0.9914 ± 0.004 | 0.8706 ± 0.022 | 0.7491 ± 0.094 | 0.4023 ± 0.095 | 0.03834 ± 0.063 | 0.009022 ± 0.0075 | 13.2 ± 1.2 | 2.381 ± 0.072 | 0.001471 ± 0.00071 | 0 ± 0 |
+| Fix-SHAP-gated-bins | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03209 ± 0.0053 | 0.5501 ± 0.31 | 0.9435 ± 0.011 | 0.6948 ± 0.038 | 0.4775 ± 0.13 | 0.4277 ± 0.087 | 1 ± 0 | 1 ± 0 | 22.2 ± 7.6 | 2.896 ± 0.18 | 0.6559 ± 0.074 | 0.6643 ± 0.17 |
+| Fix-no-port-bins | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03925 ± 0.0038 | 0.2013 ± 0.3 | 0.9506 ± 0.0083 | 0.8046 ± 0.022 | 0.7491 ± 0.094 | 0.4103 ± 0.092 | 0.08821 ± 0.051 | 0.06155 ± 0.038 | 18 ± 2.2 | 2.718 ± 0.2 | 0.6699 ± 0.076 | 0.6943 ± 0.14 |
+| Fix-label-filter | 0.7194 ± 0.0089 | 1.497e+04 ± 3.6e+03 | 0.03832 ± 0.0039 | 0.2889 ± 0.35 | 0.9524 ± 0.0085 | 0.7739 ± 0.078 | 0.6241 ± 0.2 | 0.3954 ± 0.093 | 0.03404 ± 0.051 | 0.009211 ± 0.0087 | 13.3 ± 1.6 | 2.354 ± 0.2 | 0.6854 ± 0.077 | 0.7687 ± 0.069 |
+| B2-xgboost-shap | 0.9999 ± 5.3e-06 | 6.576e+04 ± 1e+02 | 0 ± 0 | 0.8773 ± 0.0012 | 0.9752 ± 9.7e-05 |  |  |  |  |  |  |  |  |  |
+| XTriage@sample | 0.7194 ± 0.0089 | 1500 ± 0 | 0.9724 ± 0.028 | 0.1245 ± 0.19 | 0.9321 ± 0.022 | 0.8173 ± 0.13 | 0.8517 ± 0.077 | 0.5222 ± 0.062 | 0.05166 ± 0.04 | 0.02491 ± 0.021 | 7.1 ± 1.4 | 1.779 ± 0.27 | 0.5908 ± 0.027 | 0.6363 ± 0.39 |
+| B5-LIME@sample | 0.7194 ± 0.0089 | 1500 ± 0 | 0.97 ± 0.019 | 0.07687 ± 0.045 | 0.9337 ± 0.022 | 0.8281 ± 0.13 | 0.8711 ± 0.066 | 0.516 ± 0.06 | 0.02141 ± 0.034 | 0.02141 ± 0.034 | 7.5 ± 1.3 | 1.86 ± 0.28 | 0.5968 ± 0.03 | 0.7329 ± 0.17 |
+| B1-score-only@sample | 0.7194 ± 0.0089 | 1500 ± 0 | 0.9445 ± 0.088 | 0.5067 ± 0.13 | 0.8193 ± 0.017 |  |  |  |  |  |  |  |  |  |
+| Anchors@sample | 0.7194 ± 0.0089 | 2000 ± 0 | 0.6073 ± 0.18 | 0.6842 ± 0.079 | 0.837 ± 0.013 | 0.5272 ± 0.019 | 0 ± 0 | 1 ± 0 | 0.3338 ± 0.12 | 0.07282 ± 0.11 | 37.1 ± 3.8 | 1.047 ± 0.078 | 0.1351 ± 0.018 | 0.5692 ± 0.2 |
+| XTriage@anchor-sample | 0.7194 ± 0.0089 | 2000 ± 0 | 0.9262 ± 0.047 | 0.1902 ± 0.24 | 0.9232 ± 0.019 | 0.796 ± 0.12 | 0.8103 ± 0.08 | 0.5321 ± 0.067 | 0.03856 ± 0.044 | 0.01261 ± 0.011 | 9.8 ± 1.6 | 2.228 ± 0.23 | 0.58 ± 0.034 | 0.645 ± 0.28 |
 
 ### Paired Wilcoxon signed-rank tests, XTriage vs. each method (over seeds)
 
-With n = 5 seeds the smallest attainable p-value is 0.0625 two-sided and 0.03125 one-sided.
+n = 10 seeds; with 5 the smallest attainable p-value is 0.0625 two-sided.
 
 | reference | method | metric | n | ref_mean | other_mean | p_two_sided | p_one_sided |
 |---|---|---|---|---|---|---|---|
-| XTriage | B1-score-only | workload@90_frac | 5 | 0.205 | 0.453 | 0.188 | 0.094 |
-| XTriage | B1-score-only | ndcg | 5 | 0.955 | 0.923 | 0.062 | 0.031 |
-| XTriage | B1-score-only | recall@1000 | 5 | 0.039 | 0.017 | 0.062 | 0.031 |
+| XTriage | B1-score-only | workload@90_frac | 10 | 0.205 | 0.496 | 0.020 | 0.010 |
+| XTriage | B1-score-only | ndcg | 10 | 0.951 | 0.920 | 0.002 | 0.001 |
+| XTriage | B1-score-only | recall@1000 | 10 | 0.039 | 0.017 | 0.002 | 0.001 |
 | XTriage | B1-score-only | macro_f1 | 0 |  |  |  |  |
 | XTriage | B1-score-only | fidelity | 0 |  |  |  |  |
 | XTriage | B1-score-only | n_rules | 0 |  |  |  |  |
-| XTriage | B3-raw-rules | workload@90_frac | 5 | 0.205 | 0.572 | 0.125 | 0.062 |
-| XTriage | B3-raw-rules | ndcg | 5 | 0.955 | 0.993 | 0.062 | 1.000 |
-| XTriage | B3-raw-rules | recall@1000 | 5 | 0.039 | 0.032 | 0.125 | 0.062 |
-| XTriage | B3-raw-rules | macro_f1 | 5 | 0.816 | 0.881 | 0.062 | 1.000 |
-| XTriage | B3-raw-rules | fidelity | 5 | 0.056 | 0.064 | 0.812 | 0.688 |
-| XTriage | B3-raw-rules | n_rules | 5 | 13.000 | 14.800 | 0.312 | 0.156 |
-| XTriage | B4-tree-surrogate | workload@90_frac | 5 | 0.205 | 0.794 | 0.062 | 0.031 |
-| XTriage | B4-tree-surrogate | ndcg | 5 | 0.955 | 0.951 | 0.125 | 0.062 |
-| XTriage | B4-tree-surrogate | recall@1000 | 5 | 0.039 | 0.030 | 0.062 | 0.031 |
-| XTriage | B4-tree-surrogate | macro_f1 | 5 | 0.816 | 0.747 | 0.125 | 0.062 |
-| XTriage | B4-tree-surrogate | fidelity | 5 | 0.056 | 0.021 | 0.812 | 0.406 |
-| XTriage | B4-tree-surrogate | n_rules | 5 | 13.000 | 12.000 | 0.500 | 0.875 |
-| XTriage | Abl-no-SHAP-predicates | workload@90_frac | 5 | 0.205 | 0.206 | 0.875 | 0.688 |
-| XTriage | Abl-no-SHAP-predicates | ndcg | 5 | 0.955 | 0.954 | 1.000 | 0.594 |
-| XTriage | Abl-no-SHAP-predicates | recall@1000 | 5 | 0.039 | 0.039 | 0.250 | 1.000 |
-| XTriage | Abl-no-SHAP-predicates | macro_f1 | 5 | 0.816 | 0.827 | 0.625 | 0.781 |
-| XTriage | Abl-no-SHAP-predicates | fidelity | 5 | 0.056 | 0.063 | 0.812 | 0.688 |
-| XTriage | Abl-no-SHAP-predicates | n_rules | 5 | 13.000 | 15.200 | 0.188 | 0.094 |
-| XTriage | Abl-no-score-band | workload@90_frac | 5 | 0.205 | 0.205 | 1.000 | 0.750 |
-| XTriage | Abl-no-score-band | ndcg | 5 | 0.955 | 0.955 | 0.500 | 1.000 |
-| XTriage | Abl-no-score-band | recall@1000 | 5 | 0.039 | 0.039 | 1.000 | 1.000 |
-| XTriage | Abl-no-score-band | macro_f1 | 5 | 0.816 | 0.815 | 1.000 | 0.500 |
-| XTriage | Abl-no-score-band | fidelity | 5 | 0.056 | 0.057 | 0.500 | 1.000 |
-| XTriage | Abl-no-score-band | n_rules | 5 | 13.000 | 13.200 | 1.000 | 0.500 |
-| XTriage | Abl-no-guard | workload@90_frac | 5 | 0.205 | 0.571 | 0.250 | 0.125 |
-| XTriage | Abl-no-guard | ndcg | 5 | 0.955 | 0.993 | 0.062 | 1.000 |
-| XTriage | Abl-no-guard | recall@1000 | 5 | 0.039 | 0.031 | 0.125 | 0.062 |
-| XTriage | Abl-no-guard | macro_f1 | 5 | 0.816 | 0.874 | 0.062 | 1.000 |
-| XTriage | Abl-no-guard | fidelity | 5 | 0.056 | 0.056 |  |  |
-| XTriage | Abl-no-guard | n_rules | 5 | 13.000 | 13.000 |  |  |
-| XTriage | Abl-guard-review-tier | workload@90_frac | 5 | 0.205 | 0.464 | 0.125 | 0.062 |
-| XTriage | Abl-guard-review-tier | ndcg | 5 | 0.955 | 0.949 | 0.062 | 0.031 |
-| XTriage | Abl-guard-review-tier | recall@1000 | 5 | 0.039 | 0.024 | 0.062 | 0.031 |
-| XTriage | Abl-guard-review-tier | macro_f1 | 5 | 0.816 | 0.737 | 0.062 | 0.031 |
-| XTriage | Abl-guard-review-tier | fidelity | 5 | 0.056 | 0.056 |  |  |
-| XTriage | Abl-guard-review-tier | n_rules | 5 | 13.000 | 13.000 |  |  |
-| XTriage | B2-xgboost-shap | workload@90_frac | 5 | 0.205 | 0.877 | 0.062 | 0.031 |
-| XTriage | B2-xgboost-shap | ndcg | 5 | 0.955 | 0.975 | 0.062 | 1.000 |
-| XTriage | B2-xgboost-shap | recall@1000 | 5 | 0.039 | 0.000 | 0.062 | 0.031 |
+| XTriage | B3-raw-rules | workload@90_frac | 10 | 0.205 | 0.540 | 0.012 | 0.006 |
+| XTriage | B3-raw-rules | ndcg | 10 | 0.951 | 0.993 | 0.002 | 1.000 |
+| XTriage | B3-raw-rules | recall@1000 | 10 | 0.039 | 0.033 | 0.004 | 0.002 |
+| XTriage | B3-raw-rules | macro_f1 | 10 | 0.810 | 0.889 | 0.002 | 1.000 |
+| XTriage | B3-raw-rules | fidelity | 10 | 0.038 | 0.051 | 0.322 | 0.862 |
+| XTriage | B3-raw-rules | n_rules | 10 | 13.200 | 14.800 | 0.102 | 0.051 |
+| XTriage | B4-tree-surrogate | workload@90_frac | 10 | 0.205 | 0.779 | 0.002 | 0.001 |
+| XTriage | B4-tree-surrogate | ndcg | 10 | 0.951 | 0.947 | 0.010 | 0.005 |
+| XTriage | B4-tree-surrogate | recall@1000 | 10 | 0.039 | 0.031 | 0.002 | 0.001 |
+| XTriage | B4-tree-surrogate | macro_f1 | 10 | 0.810 | 0.750 | 0.004 | 0.002 |
+| XTriage | B4-tree-surrogate | fidelity | 10 | 0.038 | 0.023 | 0.846 | 0.615 |
+| XTriage | B4-tree-surrogate | n_rules | 10 | 13.200 | 12.100 | 0.062 | 0.992 |
+| XTriage | Abl-no-SHAP-predicates | workload@90_frac | 10 | 0.205 | 0.201 | 0.426 | 0.820 |
+| XTriage | Abl-no-SHAP-predicates | ndcg | 10 | 0.951 | 0.952 | 0.375 | 0.839 |
+| XTriage | Abl-no-SHAP-predicates | recall@1000 | 10 | 0.039 | 0.040 | 0.594 | 0.797 |
+| XTriage | Abl-no-SHAP-predicates | macro_f1 | 10 | 0.810 | 0.834 | 0.037 | 0.986 |
+| XTriage | Abl-no-SHAP-predicates | fidelity | 10 | 0.038 | 0.051 | 0.322 | 0.862 |
+| XTriage | Abl-no-SHAP-predicates | n_rules | 10 | 13.200 | 15.100 | 0.039 | 0.020 |
+| XTriage | Abl-no-score-band | workload@90_frac | 10 | 0.205 | 0.205 | 0.500 | 0.875 |
+| XTriage | Abl-no-score-band | ndcg | 10 | 0.951 | 0.951 | 0.250 | 1.000 |
+| XTriage | Abl-no-score-band | recall@1000 | 10 | 0.039 | 0.040 | 0.500 | 1.000 |
+| XTriage | Abl-no-score-band | macro_f1 | 10 | 0.810 | 0.812 | 0.750 | 0.750 |
+| XTriage | Abl-no-score-band | fidelity | 10 | 0.038 | 0.038 | 0.500 | 0.875 |
+| XTriage | Abl-no-score-band | n_rules | 10 | 13.200 | 13.100 | 1.000 | 0.750 |
+| XTriage | Abl-no-guard | workload@90_frac | 10 | 0.205 | 0.537 | 0.031 | 0.016 |
+| XTriage | Abl-no-guard | ndcg | 10 | 0.951 | 0.991 | 0.002 | 1.000 |
+| XTriage | Abl-no-guard | recall@1000 | 10 | 0.039 | 0.032 | 0.008 | 0.004 |
+| XTriage | Abl-no-guard | macro_f1 | 10 | 0.810 | 0.871 | 0.002 | 1.000 |
+| XTriage | Abl-no-guard | fidelity | 10 | 0.038 | 0.038 |  |  |
+| XTriage | Abl-no-guard | n_rules | 10 | 13.200 | 13.200 |  |  |
+| XTriage | Abl-guard-review-tier | workload@90_frac | 10 | 0.205 | 0.498 | 0.008 | 0.004 |
+| XTriage | Abl-guard-review-tier | ndcg | 10 | 0.951 | 0.945 | 0.002 | 0.001 |
+| XTriage | Abl-guard-review-tier | recall@1000 | 10 | 0.039 | 0.025 | 0.002 | 0.001 |
+| XTriage | Abl-guard-review-tier | macro_f1 | 10 | 0.810 | 0.736 | 0.004 | 0.002 |
+| XTriage | Abl-guard-review-tier | fidelity | 10 | 0.038 | 0.038 |  |  |
+| XTriage | Abl-guard-review-tier | n_rules | 10 | 13.200 | 13.200 |  |  |
+| XTriage | Fix-calibrated-guard | workload@90_frac | 10 | 0.205 | 0.537 | 0.031 | 0.016 |
+| XTriage | Fix-calibrated-guard | ndcg | 10 | 0.951 | 0.991 | 0.002 | 1.000 |
+| XTriage | Fix-calibrated-guard | recall@1000 | 10 | 0.039 | 0.032 | 0.008 | 0.004 |
+| XTriage | Fix-calibrated-guard | macro_f1 | 10 | 0.810 | 0.871 | 0.002 | 1.000 |
+| XTriage | Fix-calibrated-guard | fidelity | 10 | 0.038 | 0.038 |  |  |
+| XTriage | Fix-calibrated-guard | n_rules | 10 | 13.200 | 13.200 |  |  |
+| XTriage | Fix-SHAP-gated-bins | workload@90_frac | 10 | 0.205 | 0.550 | 0.027 | 0.014 |
+| XTriage | Fix-SHAP-gated-bins | ndcg | 10 | 0.951 | 0.943 | 0.004 | 0.002 |
+| XTriage | Fix-SHAP-gated-bins | recall@1000 | 10 | 0.039 | 0.032 | 0.004 | 0.002 |
+| XTriage | Fix-SHAP-gated-bins | macro_f1 | 10 | 0.810 | 0.695 | 0.002 | 0.001 |
+| XTriage | Fix-SHAP-gated-bins | fidelity | 10 | 0.038 | 1.000 | 0.002 | 1.000 |
+| XTriage | Fix-SHAP-gated-bins | n_rules | 10 | 13.200 | 22.200 | 0.006 | 0.003 |
+| XTriage | Fix-no-port-bins | workload@90_frac | 10 | 0.205 | 0.201 | 0.500 | 1.000 |
+| XTriage | Fix-no-port-bins | ndcg | 10 | 0.951 | 0.951 | 0.432 | 0.216 |
+| XTriage | Fix-no-port-bins | recall@1000 | 10 | 0.039 | 0.039 |  |  |
+| XTriage | Fix-no-port-bins | macro_f1 | 10 | 0.810 | 0.805 | 0.322 | 0.161 |
+| XTriage | Fix-no-port-bins | fidelity | 10 | 0.038 | 0.088 | 0.064 | 0.976 |
+| XTriage | Fix-no-port-bins | n_rules | 10 | 13.200 | 18.000 | 0.002 | 0.001 |
+| XTriage | Fix-label-filter | workload@90_frac | 10 | 0.205 | 0.289 | 0.203 | 0.102 |
+| XTriage | Fix-label-filter | ndcg | 10 | 0.951 | 0.952 | 0.064 | 0.976 |
+| XTriage | Fix-label-filter | recall@1000 | 10 | 0.039 | 0.038 | 0.359 | 0.180 |
+| XTriage | Fix-label-filter | macro_f1 | 10 | 0.810 | 0.774 | 0.322 | 0.161 |
+| XTriage | Fix-label-filter | fidelity | 10 | 0.038 | 0.034 | 0.375 | 0.188 |
+| XTriage | Fix-label-filter | n_rules | 10 | 13.200 | 13.300 | 0.984 | 0.492 |
+| XTriage | B2-xgboost-shap | workload@90_frac | 10 | 0.205 | 0.877 | 0.002 | 0.001 |
+| XTriage | B2-xgboost-shap | ndcg | 10 | 0.951 | 0.975 | 0.002 | 1.000 |
+| XTriage | B2-xgboost-shap | recall@1000 | 10 | 0.039 | 0.000 | 0.002 | 0.001 |
 | XTriage | B2-xgboost-shap | macro_f1 | 0 |  |  |  |  |
 | XTriage | B2-xgboost-shap | fidelity | 0 |  |  |  |  |
 | XTriage | B2-xgboost-shap | n_rules | 0 |  |  |  |  |
@@ -131,16 +159,40 @@ Deletion-curve faithfulness (lower AUC = more faithful):
 
 ### Feature-space evasion
 
-| probe | variant | n | mean_abs_dq | mean_ds | evaded_detection | rule_changed | tier_changed | tier_changed_still_alerted | p1_downgraded | became_contested |
-|---|---|---|---|---|---|---|---|---|---|---|
-| evasion | padding=16 | 2000 | 0.001 | -0.077 | 0.022 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
-| evasion | padding=64 | 2000 | 0.003 | -0.019 | 0.034 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
-| evasion | padding=256 | 2000 | 0.005 | 0.318 | 0.000 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
-| evasion | timing=0.5 | 2000 | 0.019 | -1.120 | 0.279 | 0.014 | 0.009 | 0.011 | 0.094 | 0.002 |
-| evasion | timing=2.0 | 2000 | 0.007 | 0.671 | 0.000 | 0.006 | 0.004 | 0.004 | 0.125 | 0.003 |
-| evasion | timing=5.0 | 2000 | 0.010 | 1.000 | 0.000 | 0.021 | 0.015 | 0.015 | 0.188 | 0.013 |
-| evasion | port=80 | 2000 | 0.000 | -0.001 | 0.000 | 0.005 | 0.000 | 0.000 | 0.000 | 0.001 |
-| evasion | port=443 | 2000 | 0.000 | 0.010 | 0.007 | 0.780 | 0.359 | 0.355 | 0.000 | 0.001 |
+| probe | method | variant | n | mean_abs_dq | mean_ds | evaded_detection | rule_changed | tier_changed | tier_changed_still_alerted | p1_downgraded | became_contested |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| evasion | XTriage | padding=16 | 2000 | 0.001 | -0.077 | 0.022 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
+| evasion | XTriage | padding=64 | 2000 | 0.003 | -0.019 | 0.034 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
+| evasion | XTriage | padding=256 | 2000 | 0.005 | 0.318 | 0.000 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
+| evasion | XTriage | timing=0.5 | 2000 | 0.019 | -1.120 | 0.279 | 0.014 | 0.009 | 0.011 | 0.094 | 0.002 |
+| evasion | XTriage | timing=2.0 | 2000 | 0.007 | 0.671 | 0.000 | 0.006 | 0.004 | 0.004 | 0.125 | 0.003 |
+| evasion | XTriage | timing=5.0 | 2000 | 0.010 | 1.000 | 0.000 | 0.021 | 0.015 | 0.015 | 0.188 | 0.013 |
+| evasion | XTriage | port=80 | 2000 | 0.000 | -0.001 | 0.000 | 0.005 | 0.000 | 0.000 | 0.000 | 0.001 |
+| evasion | XTriage | port=443 | 2000 | 0.000 | 0.010 | 0.007 | 0.780 | 0.359 | 0.355 | 0.000 | 0.001 |
+| evasion | Fix-SHAP-gated-bins | padding=16 | 2000 | 0.001 | -0.077 | 0.022 | 0.007 | 0.003 | 0.003 | 0.042 | 0.004 |
+| evasion | Fix-SHAP-gated-bins | padding=64 | 2000 | 0.003 | -0.019 | 0.034 | 0.011 | 0.005 | 0.006 | 0.042 | 0.004 |
+| evasion | Fix-SHAP-gated-bins | padding=256 | 2000 | 0.005 | 0.318 | 0.000 | 0.079 | 0.017 | 0.017 | 0.250 | 0.009 |
+| evasion | Fix-SHAP-gated-bins | timing=0.5 | 2000 | 0.019 | -1.120 | 0.279 | 0.245 | 0.231 | 0.172 | 0.125 | 0.002 |
+| evasion | Fix-SHAP-gated-bins | timing=2.0 | 2000 | 0.007 | 0.671 | 0.000 | 0.216 | 0.102 | 0.102 | 0.208 | 0.007 |
+| evasion | Fix-SHAP-gated-bins | timing=5.0 | 2000 | 0.010 | 1.000 | 0.000 | 0.238 | 0.096 | 0.096 | 0.167 | 0.020 |
+| evasion | Fix-SHAP-gated-bins | port=80 | 2000 | 0.000 | -0.001 | 0.000 | 0.001 | 0.000 | 0.000 | 0.000 | 0.001 |
+| evasion | Fix-SHAP-gated-bins | port=443 | 2000 | 0.000 | 0.010 | 0.007 | 0.001 | 0.000 | 0.000 | 0.000 | 0.001 |
+| evasion | Fix-no-port-bins | padding=16 | 2000 | 0.001 | -0.077 | 0.022 | 0.011 | 0.011 | 0.011 | 0.000 | 0.008 |
+| evasion | Fix-no-port-bins | padding=64 | 2000 | 0.003 | -0.019 | 0.034 | 0.034 | 0.032 | 0.033 | 0.000 | 0.029 |
+| evasion | Fix-no-port-bins | padding=256 | 2000 | 0.005 | 0.318 | 0.000 | 0.087 | 0.059 | 0.059 | 0.000 | 0.046 |
+| evasion | Fix-no-port-bins | timing=0.5 | 2000 | 0.019 | -1.120 | 0.279 | 0.075 | 0.014 | 0.008 | 0.094 | 0.010 |
+| evasion | Fix-no-port-bins | timing=2.0 | 2000 | 0.007 | 0.671 | 0.000 | 0.053 | 0.046 | 0.046 | 0.125 | 0.045 |
+| evasion | Fix-no-port-bins | timing=5.0 | 2000 | 0.010 | 1.000 | 0.000 | 0.070 | 0.058 | 0.058 | 0.188 | 0.056 |
+| evasion | Fix-no-port-bins | port=80 | 2000 | 0.000 | -0.001 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.001 |
+| evasion | Fix-no-port-bins | port=443 | 2000 | 0.000 | 0.010 | 0.007 | 0.000 | 0.000 | 0.000 | 0.000 | 0.001 |
+| evasion | Fix-calibrated-guard | padding=16 | 2000 | 0.001 | -0.077 | 0.022 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
+| evasion | Fix-calibrated-guard | padding=64 | 2000 | 0.003 | -0.019 | 0.034 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
+| evasion | Fix-calibrated-guard | padding=256 | 2000 | 0.005 | 0.318 | 0.000 | 0.001 | 0.001 | 0.001 | 0.000 | 0.004 |
+| evasion | Fix-calibrated-guard | timing=0.5 | 2000 | 0.019 | -1.120 | 0.279 | 0.014 | 0.009 | 0.012 | 0.094 | 0.004 |
+| evasion | Fix-calibrated-guard | timing=2.0 | 2000 | 0.007 | 0.671 | 0.000 | 0.006 | 0.004 | 0.004 | 0.125 | 0.001 |
+| evasion | Fix-calibrated-guard | timing=5.0 | 2000 | 0.010 | 1.000 | 0.000 | 0.021 | 0.016 | 0.016 | 0.188 | 0.000 |
+| evasion | Fix-calibrated-guard | port=80 | 2000 | 0.000 | -0.001 | 0.000 | 0.005 | 0.003 | 0.003 | 0.000 | 0.001 |
+| evasion | Fix-calibrated-guard | port=443 | 2000 | 0.000 | 0.010 | 0.007 | 0.780 | 0.736 | 0.734 | 0.000 | 0.001 |
 
 ### Rule infidelity and the guard
 
@@ -161,28 +213,76 @@ Deletion-curve faithfulness (lower AUC = more faithful):
 | 4 | XTriage | 0.023 | 0.759 | 0.088 | 0.003 | 20.000 | 0.600 |
 | 4 | B4-tree-surrogate | 0.008 | 0.061 | 0.113 | 0.015 | 26.000 | 0.577 |
 | 4 | Abl-no-guard | 0.023 | 0.000 | 0.000 |  | 20.000 | 0.000 |
+| 5 | XTriage | 0.067 | 0.677 | 0.045 | 0.005 | 14.000 | 0.714 |
+| 5 | B4-tree-surrogate | 0.011 | 0.081 | 0.227 | 0.030 | 26.000 | 0.692 |
+| 5 | Abl-no-guard | 0.067 | 0.000 | 0.000 |  | 14.000 | 0.000 |
+| 6 | XTriage | 0.073 | 0.604 | 0.036 | 0.004 | 15.000 | 0.867 |
+| 6 | B4-tree-surrogate | 0.009 | 0.091 | 0.363 | 0.037 | 31.000 | 0.774 |
+| 6 | Abl-no-guard | 0.073 | 0.000 | 0.000 |  | 15.000 | 0.000 |
+| 7 | XTriage | 0.037 | 0.755 | 0.041 | 0.002 | 17.000 | 0.706 |
+| 7 | B4-tree-surrogate | 0.007 | 0.068 | 0.290 | 0.030 | 27.000 | 0.778 |
+| 7 | Abl-no-guard | 0.037 | 0.000 | 0.000 |  | 17.000 | 0.000 |
+| 8 | XTriage | 0.113 | 0.589 | 0.014 | 0.003 | 10.000 | 0.800 |
+| 8 | B4-tree-surrogate | 0.020 | 0.090 | 0.153 | 0.034 | 31.000 | 0.581 |
+| 8 | Abl-no-guard | 0.113 | 0.000 | 0.000 |  | 10.000 | 0.000 |
+| 9 | XTriage | 0.101 | 0.600 | 0.029 | 0.005 | 0.000 |  |
+| 9 | B4-tree-surrogate | 0.018 | 0.096 | 0.152 | 0.029 | 28.000 | 0.714 |
+| 9 | Abl-no-guard | 0.101 | 0.000 | 0.000 |  | 0.000 |  |
+
+### Guard trade-off (calibrated guard, tau sweep; seed 0)
+
+| probe | variant | tau | workload@90_frac | ndcg | macro_f1 | p1_f1 | contested_rate | guard_catch_rate | guard_precision | severe_errors | severe_caught |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| guard | Abl-no-guard |  | 0.560 | 0.991 | 0.896 | 0.810 | 0.000 | 0.000 |  | 11 | 0.000 |
+| guard | XTriage |  | 0.041 | 0.941 | 0.825 | 0.810 | 0.620 | 0.030 | 0.003 | 11 | 0.727 |
+| guard | calibrated | 0.002 | 0.560 | 0.991 | 0.896 | 0.810 | 0.001 | 0.004 | 0.250 | 11 | 0.000 |
+| guard | calibrated | 0.005 | 0.560 | 0.991 | 0.896 | 0.810 | 0.001 | 0.004 | 0.273 | 11 | 0.000 |
+| guard | calibrated | 0.010 | 0.560 | 0.991 | 0.896 | 0.810 | 0.001 | 0.004 | 0.273 | 11 | 0.000 |
+| guard | calibrated | 0.020 | 0.560 | 0.991 | 0.896 | 0.810 | 0.001 | 0.004 | 0.273 | 11 | 0.000 |
+| guard | calibrated | 0.050 | 0.560 | 0.991 | 0.896 | 0.810 | 0.001 | 0.004 | 0.273 | 11 | 0.000 |
+| guard | calibrated | 0.100 | 0.560 | 0.991 | 0.896 | 0.810 | 0.001 | 0.004 | 0.273 | 11 | 0.000 |
+
+### Alert threshold (mean over probe seeds)
+
+| theta | alerts | det_p1_alerted | recall@1000 | workload@90 | workload@90_frac | ndcg | macro_f1 | p1_f1 | contested_rate |
+|---|---|---|---|---|---|---|---|---|---|
+| 0.900 | 33944.667 | 0.047 | 0.038 | 2447.000 | 0.072 | 0.963 | 0.551 | 0.518 | 0.529 |
+| 0.950 | 16241.333 | 0.045 | 0.041 | 621.333 | 0.034 | 0.954 | 0.824 | 0.789 | 0.697 |
+| 0.990 | 3963.000 | 0.033 | 0.029 | 1063.667 | 0.264 | 0.903 | 0.513 | 0.715 | 0.994 |
+
+### Isolation-forest size vs. explanation stability across retraining seeds
+
+| probe | n_estimators | n | jaccard_seed | kendall_seed | mean_abs_dq_seed | jaccard_seed[low] | jaccard_seed[medium] | jaccard_seed[high] |
+|---|---|---|---|---|---|---|---|---|
+| forest-size | 100 | 600 | 0.270 | 0.694 | 0.005 | 0.332 | 0.242 | 0.196 |
+| forest-size | 300 | 600 | 0.362 | 0.801 | 0.003 | 0.416 | 0.336 | 0.311 |
+| forest-size | 1000 | 600 | 0.498 | 0.882 | 0.002 | 0.582 | 0.458 | 0.404 |
 
 ### Oracle noise (mean over probe seeds)
 
-| eta | macro_f1 | macro_f1_rules | p1_f1 | coverage | n_rules | mean_rule_len | fidelity | workload@90_frac | ndcg | contested_rate | guard_catch_rate |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 0.000 | 0.824 | 0.887 | 0.789 | 0.383 | 13.333 | 2.373 | 0.084 | 0.034 | 0.954 | 0.697 | 0.044 |
-| 0.100 | 0.630 | 0.693 | 0.165 | 0.381 | 9.667 | 2.756 | 0.081 | 0.579 | 0.945 | 0.711 | 0.230 |
-| 0.200 | 0.482 | 0.644 | 0.000 | 0.531 | 12.333 | 3.008 | 0.110 | 0.571 | 0.930 | 0.531 | 0.332 |
-| 0.300 | 0.367 | 0.634 | 0.000 | 0.465 | 9.667 | 2.994 | 0.036 | 0.633 | 0.931 | 0.555 | 0.700 |
+| method | eta | labels_filtered | macro_f1 | macro_f1_rules | p1_f1 | coverage | n_rules | mean_rule_len | fidelity | workload@90_frac | ndcg | contested_rate | guard_catch_rate |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Fix-label-filter | 0.000 | 5.000 | 0.797 | 0.860 | 0.690 | 0.374 | 14.000 | 2.435 | 0.073 | 0.070 | 0.954 | 0.706 | 0.058 |
+| Fix-label-filter | 0.100 | 2038.333 | 0.729 | 0.791 | 0.514 | 0.389 | 13.333 | 2.744 | 0.097 | 0.325 | 0.954 | 0.692 | 0.071 |
+| Fix-label-filter | 0.200 | 3048.000 | 0.563 | 0.626 | 0.053 | 0.457 | 23.333 | 3.508 | 0.066 | 0.759 | 0.963 | 0.697 | 0.573 |
+| Fix-label-filter | 0.300 | 2625.667 | 0.525 | 0.587 | 0.006 | 0.558 | 21.333 | 3.530 | 0.080 | 0.795 | 0.973 | 0.677 | 0.689 |
+| XTriage | 0.000 | 0.000 | 0.824 | 0.887 | 0.789 | 0.383 | 13.333 | 2.373 | 0.084 | 0.034 | 0.954 | 0.697 | 0.044 |
+| XTriage | 0.100 | 0.000 | 0.630 | 0.693 | 0.165 | 0.381 | 9.667 | 2.756 | 0.081 | 0.579 | 0.945 | 0.711 | 0.230 |
+| XTriage | 0.200 | 0.000 | 0.482 | 0.644 | 0.000 | 0.531 | 12.333 | 3.008 | 0.110 | 0.571 | 0.930 | 0.531 | 0.332 |
+| XTriage | 0.300 | 0.000 | 0.367 | 0.634 | 0.000 | 0.465 | 9.667 | 2.994 | 0.036 | 0.633 | 0.931 | 0.555 | 0.700 |
 
 ## Detector robustness
 
 | detector | method | det_auroc | det_auprc | alerts | alerts_explained | workload@90_frac | ndcg | recall@1000 | macro_f1 | fidelity | n_rules | seconds |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| autoencoder | XTriage | 0.9038 ± 0.0098 | 0.8068 ± 0.0095 | 3000 ± 0 | 3000 ± 0 | 0.09322 ± 0.0048 | 0.9454 ± 0.02 | 0.9919 ± 0.0052 | 0.6248 ± 0.2 | 0.1258 ± 0.043 | 19.33 ± 3.5 | 83.01 ± 3.6 |
-| autoencoder | B1-score-only | 0.9038 ± 0.0098 | 0.8068 ± 0.0095 | 3000 ± 0 | 3000 ± 0 | 0.7253 ± 0.037 | 0.8064 ± 0.009 | 0.09738 ± 0.018 |  |  |  | 83.01 ± 3.6 |
-| xgboost | XTriage | 0.9999 ± 6.5e-06 | 0.9999 ± 8e-06 | 6.585e+04 ± 35 | 6.585e+04 ± 35 | 0.03954 ± 0.0025 | 0.9953 ± 0.00066 | 0.4576 ± 0.094 | 0.7832 ± 0.0056 | 0.3041 ± 0.13 | 13.33 ± 1.5 | 101.3 ± 1.7 |
-| xgboost | B1-score-only | 0.9999 ± 6.5e-06 | 0.9999 ± 8e-06 | 6.585e+04 ± 35 | 6.585e+04 ± 35 | 0.8766 ± 0.00058 | 0.9753 ± 4.1e-05 | 0 ± 0 |  |  |  | 101.3 ± 1.7 |
+| autoencoder | XTriage | 0.9038 ± 0.0098 | 0.8068 ± 0.0095 | 3000 ± 0 | 3000 ± 0 | 0.09322 ± 0.0048 | 0.9454 ± 0.02 | 0.9919 ± 0.0052 | 0.6248 ± 0.2 | 0.1258 ± 0.043 | 19.33 ± 3.5 | 85.55 ± 2.9 |
+| autoencoder | B1-score-only | 0.9038 ± 0.0098 | 0.8068 ± 0.0095 | 3000 ± 0 | 3000 ± 0 | 0.7253 ± 0.037 | 0.8064 ± 0.009 | 0.09738 ± 0.018 |  |  |  | 85.55 ± 2.9 |
+| xgboost | XTriage | 0.9999 ± 6.5e-06 | 0.9999 ± 8e-06 | 6.585e+04 ± 35 | 6.585e+04 ± 35 | 0.03954 ± 0.0025 | 0.9953 ± 0.00066 | 0.4576 ± 0.094 | 0.7832 ± 0.0056 | 0.3041 ± 0.13 | 13.33 ± 1.5 | 102.8 ± 2.4 |
+| xgboost | B1-score-only | 0.9999 ± 6.5e-06 | 0.9999 ± 8e-06 | 6.585e+04 ± 35 | 6.585e+04 ± 35 | 0.8766 ± 0.00058 | 0.9753 ± 4.1e-05 | 0 ± 0 |  |  |  | 102.8 ± 2.4 |
 
 ## RQ5 accountability
 
 * records: 4462, chain verified: True, tamper detected: True (first bad seq 1011)
 * replay success: 1.000 over 500 records {'score': 1.0, 'percentile': 1.0, 'attribution': 1.0, 'rule': 1.0, 'tier': 1.0, 'ok': 1.0}
-* bytes per record: 1807; contested rate: 0.631
-* testbed: 4 sensors, 60000 flows, 4462 alerts, 1469 flows/s; t1 1.655 ms/flow, t2 2.390 ms/alert, t3 0.365 ms/record, publish-to-ledger latency incl. queueing under max-rate replay p50 6995 ms / p95 22123 ms
+* bytes per record: 1805; contested rate: 0.631
+* testbed: 4 sensors, 60000 flows, 4462 alerts, 1451 flows/s; t1 1.671 ms/flow, t2 1.962 ms/alert, t3 0.370 ms/record, publish-to-ledger latency incl. queueing under max-rate replay p50 7089 ms / p95 22589 ms

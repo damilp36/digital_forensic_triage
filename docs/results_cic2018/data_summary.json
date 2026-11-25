@@ -1,0 +1,104 @@
+{
+  "windows": {
+    "fit": 1088073,
+    "tune": 1526283,
+    "test": 1737942
+  },
+  "fit_benign": 100000,
+  "calibration": 50000,
+  "background_pool": 20000,
+  "tune_rows": 161321,
+  "test_rows": 134151,
+  "tune_classes": {
+    "Benign": 69533,
+    "DoS_attacks-SlowHTTPTest": 15000,
+    "DoS_attacks-Hulk": 15000,
+    "DDoS_attacks-LOIC-HTTP": 15000,
+    "DDOS_attack-HOIC": 15000,
+    "Infilteration": 15000,
+    "Bot": 15000,
+    "Brute_Force_-Web": 873,
+    "DDOS_attack-LOIC-UDP": 474,
+    "Brute_Force_-XSS": 242,
+    "SQL_Injection": 199
+  },
+  "test_classes": {
+    "Benign": 69951,
+    "DDoS_attacks-LOIC-HTTP": 15000,
+    "DDOS_attack-HOIC": 15000,
+    "Infilteration": 15000,
+    "Bot": 15000,
+    "DDOS_attack-LOIC-UDP": 2976,
+    "Brute_Force_-Web": 745,
+    "SQL_Injection": 241,
+    "Brute_Force_-XSS": 238
+  },
+  "tune_priorities": {
+    "P3": 69533,
+    "P2": 61589,
+    "P1": 30199
+  },
+  "test_priorities": {
+    "P3": 69951,
+    "P2": 33959,
+    "P1": 30241
+  },
+  "background_hashes": [
+    "cd70871b76f3cf651888d9a4de4e3a72f06c68beb48681a00d56990e26502dce",
+    "d1b48436621cf7a8602012cfd1006bcb98d0321db442ca8a8a8892e7a5899c0c",
+    "6187293963fabcf623cf880e5ea4bc624cd27941cdea898f3d8f9ad1b0d0bec2",
+    "8a089b62faca65c7f4d6aa87c396264c3f3ea1d61dbc45349f7d0c279f881182",
+    "ea54511a2f5f7430c8bfc8146661ef798747364b73f4bd6de07ad7065a3ef87f"
+  ],
+  "split": {
+    "strategy": "blocked",
+    "fractions": [
+      0.4,
+      0.3,
+      0.3
+    ],
+    "fit_until": 0.25,
+    "block_minutes": 30
+  },
+  "sample": {
+    "fit_benign": 100000,
+    "calibration": 50000,
+    "background_pool": 20000,
+    "tune": {
+      "benign_fraction": 0.1,
+      "attack_cap_per_class": 15000,
+      "max_rows": null
+    },
+    "test": {
+      "benign_fraction": 0.1,
+      "attack_cap_per_class": 15000,
+      "max_rows": null
+    }
+  },
+  "dataset": {
+    "rows": 4352298,
+    "features": 48,
+    "attack_rate": 0.5975930416529383,
+    "classes": {
+      "Benign": 1751395,
+      "DDOS_attack-HOIC": 1032311,
+      "FTP-BruteForce": 386720,
+      "DDoS_attacks-LOIC-HTTP": 288589,
+      "Bot": 207703,
+      "SSH-Bruteforce": 188474,
+      "Infilteration": 188152,
+      "DoS_attacks-SlowHTTPTest": 105550,
+      "DoS_attacks-Hulk": 100076,
+      "DoS_attacks-GoldenEye": 61300,
+      "DoS_attacks-Slowloris": 36040,
+      "DDOS_attack-LOIC-UDP": 3450,
+      "Brute_Force_-Web": 1618,
+      "Brute_Force_-XSS": 480,
+      "SQL_Injection": 440
+    },
+    "time_span": [
+      "2018-02-14T12:28:07.705000",
+      "2018-03-02T20:04:25.524000"
+    ]
+  }
+}

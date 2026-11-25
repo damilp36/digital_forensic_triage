@@ -36,7 +36,8 @@ On this computer:
   [ ] CIC-IDS2017 CSVs (Box/Code4IT_OT/New Dataset/CIC2017, ~1 GB): nothing to do if Box
       syncs on the other computer, otherwise copy that folder to the drive
   [ ] Optional: copy runs/ (260 MB) to keep the dashboard, ledgers and XFT-Bench export;
-      otherwise rerun  xtriage evaluate --config configs/cic2017.yaml  (~41 min)
+      otherwise rerun the evaluations (10 seeds: CIC-2017 ~84 min, UNSW ~57 min, CIC-2018
+      ~63 min); the result tables and figures are already in docs/results_*/
   [ ] Do NOT copy .venv/ (rebuild it)
 
 On the new computer:
@@ -211,11 +212,67 @@ corpora / stronger statistics.
       Tests: 21 pass. Smoke run OK (3.3 min).
       Smoke hint (synthetic, not evidence): forest size 100 -> 1000 raised seed Jaccard
       0.76 -> 0.91; calibrated guard traces a clear contested-vs-caught curve.
-  [~] N1  Running in sequence (logs in runs/): eval_unsw.log -> eval_2018.log -> cross.log ->
-          eval_cic2017.log (CIC-2017 rerun with the fixes and 10 seeds; old 5-seed results stay
-          in docs/results_cic2017/). Expect several hours in total.
-  [ ] Next: read the three summary.md files, decide which fixes to keep in the final method,
-          copy results into docs/results_<corpus>/, then write the paper sections (section 6).
+  [x] N1  Full runs done, 10 seeds each, no errors: UNSW 57 min, CIC-2018 63 min, cross 1 min,
+          CIC-2017 84 min. Results copied to docs/results_unsw_nb15/, docs/results_cic2018/,
+          docs/results_cic2017/ (replaces the old 5-seed copy; that one is in git history) and
+          docs/results_cross_unsw_to_cic2018.txt.
+          workload@90_frac: LOWER is better. p-values: Wilcoxon, 10 seeds, two-sided.
+
+      What the fixes did (XTriage -> fix, mean over 10 seeds):
+        Fix-no-port-bins      KEEP. Triage unchanged on all three (p > 0.3). Port evasion gone:
+                              CIC-2017 port=443 rule_changed 0.78 -> 0.00, UNSW port=80 0.09 -> 0.00.
+        Fix-SHAP-gated-bins   DROP as default, REPORT as a finding. Fidelity 1.0 by construction,
+                              but triage worse on UNSW (workload 0.85 -> 0.91, p1_f1 0.74 -> 0.48)
+                              and CIC-2017 (0.21 -> 0.55); slightly worse on 2018 (0.81 -> 0.87).
+                              Evasion moves rather than disappears: padding/port changes stop
+                              moving rules (UNSW padding=16 0.55 -> 0.02) but timing changes now
+                              move them a lot (UNSW timing=5 p1_downgraded 0.04 -> 0.54), because
+                              the rules now depend on which features SHAP ranks top-k.
+        Fix-calibrated-guard  DATA-DEPENDENT (good limitation result). It helps only when tune and
+                              test hold the same attack classes:
+                              CIC-2018: severe_caught 0.13 -> 0.98, workload 0.81 -> 0.56, contested
+                                        0.65 -> 0.50 (better on all three).
+                              UNSW:     workload 0.85 -> 0.43, contested 0.65 -> 0.53, but the 1-3
+                                        severe errors per seed are no longer caught (1.0 -> 0).
+                              CIC-2017: contests 0.1% of alerts, i.e. behaves like no guard; severe
+                                        caught 0.75 -> 0, workload 0.21 -> 0.54. The blocked split puts
+                                        different P1 classes in tune and test, so the tune leak table
+                                        has nothing to learn from.
+                              tau sweep (fig_guard): CIC-2018 has a cliff between tau 0.02 (catches
+                              96%) and 0.05 (catches 1%); UNSW is flat; CIC-2017 is flat at 0.
+                              Message: a learned guard is only as good as the tune window's
+                              coverage of attack classes; the fixed-trigger guard is the safe
+                              default under class shift.
+        Fix-label-filter      MIXED. UNSW: no significant change. CIC-2017: no significant change
+                              at eta 0; under noise it helps at eta 0.1 (p1_f1 0.17 -> 0.51), but P1
+                              collapses at eta >= 0.2 either way (P1 is 0.6% of flows, so flips into
+                              P1 swamp the real ones). CIC-2018: better macro_f1 0.57 -> 0.65,
+                              p1_f1 0.29 -> 0.38, ndcg 0.84 -> 0.87 (all p = 0.002), but workload
+                              0.81 -> 0.89. Odd 2018 effect: plain XTriage IMPROVES with injected
+                              noise (macro_f1 0.59 -> 0.69 at eta 0.3; rules 25 -> 8); Infilteration
+                              and Bot flows look like benign traffic, so their clean labels are not
+                              learnable from the features, and noise makes RIPPER drop those rules.
+
+      Probes:
+        Forest size (W6)      Robust on all three: seed Jaccard 100 -> 1000 trees
+                              UNSW 0.41 -> 0.66, CIC-2018 0.51 -> 0.76, CIC-2017 0.27 -> 0.50
+                              (Kendall 0.69-0.72 -> 0.88-0.91). Cheap fix: use 1000 trees.
+        Theta (W1)            theta 0.99 loses most P1 before triage (UNSW det_p1_alerted 0.17 ->
+                              0.007); 0.95 is a reasonable default on all three.
+        Detector (W1a)        The autoencoder is a much better detector than the isolation forest
+                              (AUROC UNSW 0.9997 vs 0.84, CIC-2018 0.86 vs 0.69, CIC-2017 0.90
+                              vs 0.72), and XTriage on top of it cuts workload strongly (CIC-2018
+                              0.75 -> 0.31, CIC-2017 0.73 -> 0.09). Strong case for W1a, but KernelSHAP
+                              cost (3,000 alerts ~ 1 min, sampled) is the price.
+        CIC-2018 time shift   late test window holds only Bot + Infilteration; detector AUROC
+                              0.54 and attack recall 0.7% there: a detection failure, not triage.
+        Cross-corpus          trained on UNSW, applied to CIC-2018: alert rate 9% -> 47%, AUROC
+                              0.86 -> 0.32 (worse than random), macro_f1 0.40 -> 0.04. Rules do
+                              not transfer between corpora.
+        Accountability        all three: chain verified, tamper found, replay 100% of 500 records.
+
+  [ ] Next: decide the final method (suggest: fixed-trigger guard + no-port bins + 1000 trees,
+          others as reported variants), then write the paper sections (section 6).
   [ ] Not done from section 5: W1(a) autoencoder as primary detector (it is still compared in
           the "detectors" part on a 3,000-alert sample because KernelSHAP is slow); W1(c)
           periodic recalibration (the late-window misses are detection failures, so
