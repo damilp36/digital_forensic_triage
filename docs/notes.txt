@@ -31,8 +31,8 @@ STATUS AND NEXT ACTIONS  (updated 2026-11-24; progress log in section 7)
 On this computer:
   [x] Copy data/ to the drive (NetFlow CSVs, 13.3 GB; data/cache is optional, it rebuilds)
   [x] Get docs/ and the config/README edits across (pushed in 8077bae)
-  [ ] Commit and push the 2026-11-24 work (section 7), incl. src/xtriage/data/ which was
-      missing from git before (see section 7)
+  [x] Commit and push the 2026-11-24 work (6040d2e code, e369bc8 results), incl.
+      src/xtriage/data/ which was missing from git before (see section 7)
   [ ] CIC-IDS2017 CSVs (Box/Code4IT_OT/New Dataset/CIC2017, ~1 GB): nothing to do if Box
       syncs on the other computer, otherwise copy that folder to the drive
   [ ] Optional: copy runs/ (260 MB) to keep the dashboard, ledgers and XFT-Bench export;
@@ -62,8 +62,8 @@ Not in git (gitignored, copy by hand if needed):
                          NetFlow_v3_Features.csv (feature descriptions)
   data/cache/  330 MB    Parquet cache; rebuilt automatically, no need to copy
   runs/        260 MB    run outputs (ledgers, artifacts, xft-bench export)
-Copied into docs/results_cic2017/ so they travel with git: summary.md (all tables), the
-per-experiment CSVs and the three figures from the full CIC-IDS2017 run.
+Copied into docs/results_cic2017/, docs/results_unsw_nb15/, docs/results_cic2018/ so they travel
+with git: summary.md (all tables), the per-experiment CSVs and the figures of each 10-seed run.
 CIC-IDS2017 CSVs are NOT in data/raw: configs/cic2017.yaml points at
   C:/Users/popson/Box/Code4IT_OT/New Dataset/CIC2017  (edit base_dir on the new machine).
 
@@ -77,8 +77,8 @@ CIC-IDS2017 CSVs are NOT in data/raw: configs/cic2017.yaml points at
   copy the NetFlow CSVs into data/raw/ (flat, same file names as above)
   set base_dir in configs/cic2017.yaml to wherever CIC-IDS2017 lives on that machine
   smoke check:  xtriage evaluate --config configs/smoke.yaml   (~3 min, synthetic data)
-RAM: this machine has 32 GB. NF-CICIDS2018-v3 is 20.1M rows and the loader reads the whole
-CSV at once; use a machine with >= 32 GB or do action N0 first.
+RAM: this machine has 32 GB. The loader now reads CSVs in chunks and keeps 10% of benign rows
+for NF-CICIDS2018-v3 (N0), so 16 GB should be enough.
 
 3. WHAT IS DONE
 ---------------
@@ -89,7 +89,8 @@ CSV at once; use a machine with >= 32 GB or do action N0 first.
                   Shellcode 2,381, Worms 158. P2 = Fuzzers, Generic, Reconnaissance, DoS, Analysis.
     CIC-IDS2018 v3: 20.1M flows, 2018-02-14 .. 2018-03-02. P1 = Bot 207,703,
                   Infilteration 188,152 (sic), SQL_Injection 440. All DoS/DDoS/brute force = P2.
-- Not yet run: either NetFlow config, the cross-corpus test, BoT-IoT / ToN-IoT (no configs yet).
+- 10-seed runs on CIC-IDS2017, NF-UNSW-NB15-v3, NF-CICIDS2018-v3 and the cross-corpus test are
+  done (2026-11-24, see section 7; tables in docs/results_*/). Not run: BoT-IoT / ToN-IoT.
 
 4. WHAT CIC-IDS2017 SHOWED (headline)
 -------------------------------------
