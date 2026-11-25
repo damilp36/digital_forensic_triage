@@ -272,8 +272,18 @@ corpora / stronger statistics.
                               not transfer between corpora.
         Accountability        all three: chain verified, tamper found, replay 100% of 500 records.
 
-  [ ] Next: decide the final method (suggest: fixed-trigger guard + no-port bins + 1000 trees,
-          others as reported variants), then write the paper sections (section 6).
+  [x] Pushed: e369bc8 (results), fd2d487 (notes).
+  [x] Paper: docs/Phase3.tex = full 6-page IEEE paper (Proposal + Phase 2 + results), framed
+          for digital forensic triage (known error rate = silent dismissals of P1, replay =
+          chain of custody, ISO/IEC 27037/27042, Daubert, Rogers et al. triage model).
+          Covers P1-P3 of section 6. Figure: docs/figures/fig_results.pdf, rebuilt by
+          docs/figures/make_figures.py from docs/results_*/. Compiles to exactly 6 pages
+          (pdflatex, MiKTeX); any addition needs an equal cut.
+          New metric used in the paper (computed from main_per_seed.csv, not in the harness):
+          silent dismissal rate = severe_errors * (1 - severe_caught) / p1_alerts.
+  [ ] Next: read-through of Phase3.tex; decide whether the paper's method should switch the
+          defaults to no-port bins + 1000 trees (currently reported as tested mitigations);
+          P4 (XFT-Bench hosting + licence check).
   [ ] Not done from section 5: W1(a) autoencoder as primary detector (it is still compared in
           the "detectors" part on a 3,000-alert sample because KernelSHAP is slow); W1(c)
           periodic recalibration (the late-window misses are detection failures, so
